@@ -1,0 +1,1 @@
+"""Pruebas para verificar que las ventanillas (endpoints) respondan correctamente."""

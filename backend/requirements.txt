@@ -1,0 +1,4 @@
+# ARCHIVO: requirements.txt
+# MISION: Inventario de insumos (librerías).
+# RESPONSABILIDAD: Listar versiones exactas de FastAPI, SQLAlchemy y Pydantic.
+# USO: 'pip install -r requirements.txt' para replicar el ambiente.

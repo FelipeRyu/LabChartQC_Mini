@@ -1,0 +1,1 @@
+"""Pruebas para asegurar que la lógica de qc_logic.py no falle."""
