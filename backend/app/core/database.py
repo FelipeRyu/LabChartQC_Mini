@@ -1,3 +1,5 @@
+# Archivo: app/core/database.py
+
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -17,3 +19,13 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # 5. La Clase Base. De aquí heredarán todas tus tablas (modelos)
 Base = declarative_base()
+
+# --- PRUEBA TEMPORAL ---
+if __name__ == "__main__":
+    try:
+        # Intentamos conectarnos a la base de datos
+        conexion = engine.connect()
+        print("¡ÉXITO TOTAL! Conexión a la base de datos labchart_mini_db establecida. Eres una crack.")
+        conexion.close()
+    except Exception as e:
+        print(f"Error al conectar: {e}")
