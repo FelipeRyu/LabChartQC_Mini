@@ -20,6 +20,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # 5. La Clase Base. De aquí heredarán todas tus tablas (modelos)
 Base = declarative_base()
 
+# 6. DEPENDENCIA DE LA BASE DE DATOS (¡Esta es la que faltaba!)
+# Su misión es abrir la puerta de la BD cuando la API lo pide, y cerrarla cuando termina.
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 # --- PRUEBA TEMPORAL ---
 if __name__ == "__main__":
     try:
