@@ -11,16 +11,19 @@ load_dotenv()
 # 2. Obtener la URL de conexión que guardaste
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
-# 3. Crear el "Motor". Es el encargado de establecer la conexión real con PostgreSQL
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# 3. Crear el "Motor". Añadimos connect_args para forzar la traducción a UTF-8
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"client_encoding": "utf8"}
+)
 
-# 4. Crear la fábrica de Sesiones. Cada vez que hagamos una consulta, abriremos una "sesión"
+# 4. Crear la fábrica de Sesiones
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# 5. La Clase Base. De aquí heredarán todas tus tablas (modelos)
+# 5. La Clase Base
 Base = declarative_base()
 
-# 6. DEPENDENCIA DE LA BASE DE DATOS (¡Esta es la que faltaba!)
+# 6. DEPENDENCIA DE LA BASE DE DATOS
 # Su misión es abrir la puerta de la BD cuando la API lo pide, y cerrarla cuando termina.
 def get_db():
     db = SessionLocal()
@@ -28,13 +31,4 @@ def get_db():
         yield db
     finally:
         db.close()
-
-# --- PRUEBA TEMPORAL ---
-if __name__ == "__main__":
-    try:
-        # Intentamos conectarnos a la base de datos
-        conexion = engine.connect()
-        print("¡ÉXITO TOTAL! Conexión a la base de datos labchart_mini_db establecida. Eres una crack.")
-        conexion.close()
-    except Exception as e:
-        print(f"Error al conectar: {e}")
+        
