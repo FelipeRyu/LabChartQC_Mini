@@ -8,11 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Importamos los enrutadores
-from app.api import materiales
-from app.api import lotes
-from app.api import niveles
-from app.api import analitos
-from app.api import insertos # <-- Nuevo Módulo
+from app.api import materiales, lotes, niveles, analitos, insertos, operarios, corridas # <-- Nueva conexión
 
 # 1. Instancia principal de la aplicación
 app = FastAPI(title="LabChart QC API", version="1.0.0")
@@ -31,12 +27,14 @@ app.include_router(materiales.router)
 app.include_router(lotes.router)
 app.include_router(niveles.router)
 app.include_router(analitos.router)
-app.include_router(insertos.router) # <-- Conexión
+app.include_router(insertos.router)
+app.include_router(operarios.router)
+app.include_router(corridas.router) # <-- Conexión de Corridas
 
 # Ruta de prueba
 @app.get("/")
 def ruta_raiz():
     return {
         "estado": "Online",
-        "mensaje": "¡El motor del backend de LabChart QC está encendido!"
+        "mensaje": "¡El motor del backend de LabChart QC está encendido y funcionando!"
     }
