@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Importamos el enrutador de materiales que acabas de crear
 from app.api import materiales
+from app.api import lotes
 
 # 1. Instancia principal de la aplicación
 app = FastAPI(title="LabChart QC API", version="1.0.0")
@@ -27,6 +28,7 @@ app.add_middleware(
 
 # 3. CONECTAR LAS RUTAS (Aquí agregamos el archivo de materiales al servidor)
 app.include_router(materiales.router)
+app.include_router(lotes.router)
 
 # Ruta de prueba para verificar que el servidor base funciona
 @app.get("/")
@@ -35,3 +37,4 @@ def ruta_raiz():
         "estado": "Online",
         "mensaje": "¡El motor del backend de LabChart QC está encendido y funcionando!"
     }
+
