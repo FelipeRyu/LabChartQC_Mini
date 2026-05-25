@@ -1,5 +1,16 @@
-__pycache__/
-*.db
-.env
+# Archivo: .gitignore (en la raíz del proyecto)
+
+# Entornos virtuales
+venv/
+env/
 .venv/
-node_modules/
+
+# Variables de entorno (¡CRÍTICO PARA LA SEGURIDAD!)
+.env
+
+# Archivos cacheados de Python
+__pycache__/
+*.pyc
+
+# Configuraciones del editor
+.vscode/
