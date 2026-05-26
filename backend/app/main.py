@@ -20,6 +20,13 @@ from app.api import (
     metas, 
     reglas
 )
+from app.api import auth
+
+from app.core.database import engine
+from app.models import models
+
+# Esto crea las tablas automáticamente si no existen al iniciar
+models.Base.metadata.create_all(bind=engine)
 
 # 1. Instancia principal de la aplicación
 app = FastAPI(title="LabChart QC API", version="1.0.0")
@@ -44,6 +51,7 @@ app.include_router(corridas.router)
 app.include_router(areas.router)   # <-- Nueva conexión de Áreas
 app.include_router(metas.router)   # <-- Nueva conexión de Metas
 app.include_router(reglas.router)  # <-- Nueva conexión de Reglas
+app.include_router(auth.router)
 
 # Ruta de prueba
 @app.get("/")

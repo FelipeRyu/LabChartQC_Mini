@@ -3,21 +3,20 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
-# Importamos Corrida y la clase correcta: InsertoValor
 from app.models.models import Corrida, InsertoValor 
 from app.schemas.corridas import CorridaCreate, CorridaResponse
-from app.qc_logic import validar_regla_1_3s
+from app.qc_logic import evaluar_westgard # <-- Importamos el nuevo super motor
 
 router = APIRouter(prefix="/api/corridas", tags=["Ingreso de Resultados (Corridas)"])
 
 @router.post("/", response_model=CorridaResponse, status_code=status.HTTP_201_CREATED)
 def registrar_corrida(corrida: CorridaCreate, db: Session = Depends(get_db)):
     """
-    Registra un resultado y lo valida automáticamente usando el motor estadístico 
-    contra los valores de la tabla 'inserto_valores'.
+    Registra un resultado y lo valida automáticamente evaluando el 
+    historial reciente contra las reglas múltiples de Westgard.
     """
     
-    # 1. Buscar los valores de referencia en 'inserto_valores' usando la clase correcta
+    # 1. Buscar los valores de referencia (la meta)
     meta = db.query(InsertoValor).filter(InsertoValor.id_inserto == corrida.inserto_id).first()
     
     if not meta:
@@ -26,19 +25,30 @@ def registrar_corrida(corrida: CorridaCreate, db: Session = Depends(get_db)):
             detail=f"No se encontró el registro en 'inserto_valores' con ID {corrida.inserto_id}"
         )
     
-    # 2. El cerebro analiza el dato usando los nombres correctos de tus columnas
-    analisis = validar_regla_1_3s(
-        valor_control=corrida.valor_obtenido, 
-        media_objetivo=meta.media_objetivo, # Corregido para usar tu columna
-        sd_objetivo=meta.ds_objetivo       # Corregido para usar tu columna
+    # 2. Extraer el historial de las últimas 10 corridas de este inserto
+    corridas_previas = db.query(Corrida).filter(
+        Corrida.inserto_id == corrida.inserto_id
+    ).order_by(Corrida.id_corrida.asc()).limit(10).all()
+    
+    # Creamos una lista solo con los números (valores_obtenidos)
+    lista_valores = [c.valor_obtenido for c in corridas_previas]
+    
+    # Agregamos el valor que el operario está ingresando HOY
+    lista_valores.append(corrida.valor_obtenido)
+    
+    # 3. El cerebro analiza TODA la lista
+    analisis = evaluar_westgard(
+        valores_recientes=lista_valores, 
+        media_objetivo=meta.media_objetivo, 
+        sd_objetivo=meta.ds_objetivo
     )
     
-    # 3. Guardamos el resultado con el veredicto del sistema
+    # 4. Guardamos el resultado con el veredicto
     nueva_corrida = Corrida(
         operario_id=corrida.operario_id,
         inserto_id=corrida.inserto_id,
         valor_obtenido=corrida.valor_obtenido,
-        notas_usuario=f"{corrida.notas_usuario or ''} | Validación: {analisis['mensaje']}",
+        notas_usuario=f"{corrida.notas_usuario or ''} | Auto-Validación: {analisis['mensaje']}",
         aceptada=not analisis["viola_regla"] 
     )
     
