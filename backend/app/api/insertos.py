@@ -1,23 +1,45 @@
 # Archivo: app/api/insertos.py
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from typing import List
+
 from app.core.database import get_db
-from app.models.models import InsertoValor
-from app.schemas.insertos import InsertoCreate, InsertoResponse # <-- ¡LA LÍNEA QUE FALTABA!
+from app.models.models import InsertoValor, LoteMaterial, MaterialControl
+from app.core.security import obtener_usuario_actual
 
-router = APIRouter(prefix="/api/insertos", tags=["Valores de Inserto (Metas Teóricas)"])
+router = APIRouter(tags=["Gestión de Insertos"])
 
-@router.post("/", response_model=InsertoResponse, status_code=status.HTTP_201_CREATED)
-def crear_inserto(inserto: InsertoCreate, db: Session = Depends(get_db)):
-    """Crea los valores teóricos (Media y DS) para un analito dentro de un lote específico."""
-    nuevo_inserto = InsertoValor(**inserto.model_dump())
+class InsertoCreate(BaseModel):
+    lote_id: int
+    analito_id: int
+    media_objetivo: float
+    ds_objetivo: float
+
+@router.post("/api/insertos", status_code=status.HTTP_201_CREATED)
+def crear_inserto(
+    datos: InsertoCreate,
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    # 1. Seguridad: Verificar que el lote pertenezca a un material de este laboratorio
+    lote_db = db.query(LoteMaterial).join(MaterialControl).filter(
+        LoteMaterial.id_lote == datos.lote_id,
+        MaterialControl.laboratorio_id == obtener_lab_id(db, email_usuario)
+    ).first()
+
+    if not lote_db:
+        raise HTTPException(status_code=403, detail="Lote no encontrado o sin acceso")
+
+    # 2. Guardar valores
+    nuevo_inserto = InsertoValor(**datos.model_dump())
     db.add(nuevo_inserto)
     db.commit()
-    db.refresh(nuevo_inserto)
-    return nuevo_inserto
+    return {"mensaje": "Valores de inserto registrados correctamente"}
 
-@router.get("/lote/{lote_id}", response_model=List[InsertoResponse])
-def obtener_insertos_por_lote(lote_id: int, db: Session = Depends(get_db)):
-    """Trae todos los analitos y sus metas configuradas para un lote específico."""
-    return db.query(InsertoValor).filter(InsertoValor.lote_id == lote_id, InsertoValor.activo == True).all()
+# Función auxiliar para no repetir código de buscar laboratorio
+def obtener_lab_id(db, email):
+    from app.models.models import Laboratorio
+    lab = db.query(Laboratorio).filter(Laboratorio.email == email).first()
+    return lab.id if lab else None

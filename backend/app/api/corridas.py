@@ -1,54 +1,61 @@
 # Archivo: app/api/corridas.py
+
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+
 from app.core.database import get_db
-from app.models.models import Corrida, InsertoValor 
+from app.models.models import Corrida, InsertoValor, Laboratorio, Operario
 from app.schemas.corridas import CorridaCreate, CorridaResponse
-from app.qc_logic import evaluar_westgard # <-- Importamos el nuevo super motor
+from app.core.security import obtener_usuario_actual
+from app.qc_logic import evaluar_westgard
 
-router = APIRouter(prefix="/api/corridas", tags=["Ingreso de Resultados (Corridas)"])
+router = APIRouter(tags=["Ingreso de Resultados (Corridas)"])
 
-@router.post("/", response_model=CorridaResponse, status_code=status.HTTP_201_CREATED)
-def registrar_corrida(corrida: CorridaCreate, db: Session = Depends(get_db)):
-    """
-    Registra un resultado y lo valida automáticamente evaluando el 
-    historial reciente contra las reglas múltiples de Westgard.
-    """
+@router.post("/api/corridas", response_model=CorridaResponse, status_code=status.HTTP_201_CREATED)
+def registrar_corrida(
+    corrida: CorridaCreate, 
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    # 1. Seguridad: Verificar que el usuario tenga acceso al laboratorio
+    lab_actual = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
     
-    # 1. Buscar los valores de referencia (la meta)
+    # 2. Verificar que el operario_id pertenezca realmente a este laboratorio
+    operario_valido = db.query(Operario).filter(
+        Operario.id_operario == corrida.operario_id,
+        Operario.laboratorio_id == lab_actual.id
+    ).first()
+    
+    if not operario_valido:
+        raise HTTPException(status_code=403, detail="Acceso denegado: Operario no pertenece a este laboratorio")
+
+    # 3. Buscar la meta (Inserto)
     meta = db.query(InsertoValor).filter(InsertoValor.id_inserto == corrida.inserto_id).first()
-    
     if not meta:
-        raise HTTPException(
-            status_code=404, 
-            detail=f"No se encontró el registro en 'inserto_valores' con ID {corrida.inserto_id}"
-        )
+        raise HTTPException(status_code=404, detail="No se encontró la configuración del inserto")
     
-    # 2. Extraer el historial de las últimas 10 corridas de este inserto
+    # 4. Historial (Corridas previas)
     corridas_previas = db.query(Corrida).filter(
         Corrida.inserto_id == corrida.inserto_id
     ).order_by(Corrida.id_corrida.asc()).limit(10).all()
     
-    # Creamos una lista solo con los números (valores_obtenidos)
     lista_valores = [c.valor_obtenido for c in corridas_previas]
-    
-    # Agregamos el valor que el operario está ingresando HOY
     lista_valores.append(corrida.valor_obtenido)
     
-    # 3. El cerebro analiza TODA la lista
+    # 5. Análisis Westgard
     analisis = evaluar_westgard(
         valores_recientes=lista_valores, 
         media_objetivo=meta.media_objetivo, 
         sd_objetivo=meta.ds_objetivo
     )
     
-    # 4. Guardamos el resultado con el veredicto
+    # 6. Guardar corrida
     nueva_corrida = Corrida(
         operario_id=corrida.operario_id,
         inserto_id=corrida.inserto_id,
         valor_obtenido=corrida.valor_obtenido,
-        notas_usuario=f"{corrida.notas_usuario or ''} | Auto-Validación: {analisis['mensaje']}",
+        notas_usuario=f"{corrida.notas_usuario or ''} | Validación: {analisis['mensaje']}",
         aceptada=not analisis["viola_regla"] 
     )
     
@@ -58,12 +65,11 @@ def registrar_corrida(corrida: CorridaCreate, db: Session = Depends(get_db)):
     
     return nueva_corrida
 
-@router.get("/inserto/{inserto_id}", response_model=List[CorridaResponse])
-def obtener_corridas_por_inserto(inserto_id: int, db: Session = Depends(get_db)):
-    """Trae el historial de resultados para un control específico."""
+@router.get("/api/corridas/inserto/{inserto_id}", response_model=List[CorridaResponse])
+def obtener_corridas_por_inserto(
+    inserto_id: int, 
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    # Aquí podrías agregar un filtro extra para asegurar que el inserto pertenezca al laboratorio
     return db.query(Corrida).filter(Corrida.inserto_id == inserto_id).all()
-
-@router.get("/", response_model=List[CorridaResponse])
-def obtener_todas_las_corridas(db: Session = Depends(get_db)):
-    """Obtiene el listado completo de todas las corridas registradas."""
-    return db.query(Corrida).all()

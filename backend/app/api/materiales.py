@@ -1,74 +1,83 @@
 # Archivo: app/api/materiales.py
-"""
-MÓDULO DE RUTAS PARA MATERIALES DE CONTROL (API Endpoints)
-==========================================================
-Este archivo contiene las "puertas de entrada" a las que el Frontend (React) 
-hará peticiones HTTP (GET, POST, PUT, DELETE).
-"""
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from pydantic import BaseModel
+from typing import Optional
+from datetime import date
 
-# 1. Importamos nuestra función para conectarnos a la base de datos
 from app.core.database import get_db
+from app.models.models import Laboratorio, MaterialControl
+from app.core.security import obtener_usuario_actual
 
-# 2. Importamos el Modelo (la tabla física en PostgreSQL)
-from app.models.models import MaterialControl
+router = APIRouter(tags=["Materiales de Control"])
 
-# 3. Importamos los Esquemas (la validación de datos de Pydantic)
-from app.schemas.materiales import MaterialControlCreate, MaterialControlResponse
-
-# 4. Creamos el "Enrutador"
-router = APIRouter(
-    prefix="/api/materiales",
-    tags=["Materiales de Control"]
-)
+# 1. Molde de datos (Swagger pedirá esto). 
+# ¡Ojo! Ya no pedimos el laboratorio_id porque lo sacamos del carnet.
+class MaterialCreate(BaseModel):
+    nombre_material: str
+    fabricante: str
+    fecha_vencimiento: date
+    # area_id lo dejamos opcional por si aún no has creado áreas en tu base de datos
+    area_id: Optional[int] = None 
 
 # -------------------------------------------------------------------
-# RUTA 1: CREAR UN NUEVO MATERIAL (Método POST) - ¡CON CAZADOR DE ERRORES!
+# RUTA 1: CREAR UN NUEVO MATERIAL (Método POST)
 # -------------------------------------------------------------------
-@router.post("/", response_model=MaterialControlResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/api/materiales", status_code=status.HTTP_201_CREATED)
 def crear_material(
-    material: MaterialControlCreate, 
-    db: Session = Depends(get_db)    
+    datos: MaterialCreate, 
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual) # ¡El Guardia!
 ):
-    """
-    Recibe los datos del Frontend, crea un nuevo material de control y lo guarda en la BD.
-    Incluye manejo de excepciones para atrapar errores de base de datos.
-    """
+    # 1. Buscar al dueño del carnet
+    lab_actual = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
+    if not lab_actual:
+        raise HTTPException(status_code=404, detail="Laboratorio no encontrado")
+
     try:
-        # Intentamos hacer el guardado normal
-        nuevo_material_db = MaterialControl(
-            nombre_material=material.nombre_material,
-            fabricante=material.fabricante,
-            fecha_vencimiento=material.fecha_vencimiento,
-            laboratorio_id=material.laboratorio_id,
-            area_id=material.area_id
+        # 2. Crear material asignando el laboratorio automáticamente
+        nuevo_material = MaterialControl(
+            nombre_material=datos.nombre_material,
+            fabricante=datos.fabricante,
+            fecha_vencimiento=datos.fecha_vencimiento,
+            area_id=datos.area_id,
+            laboratorio_id=lab_actual.id  # Magia de seguridad
         )
-        db.add(nuevo_material_db)
+        
+        db.add(nuevo_material)
         db.commit()
-        db.refresh(nuevo_material_db)
-        return nuevo_material_db
+        db.refresh(nuevo_material)
+        
+        return {
+            "mensaje": "Material de control creado con éxito",
+            "material": {
+                "id_material": nuevo_material.id_material,
+                "nombre": nuevo_material.nombre_material,
+                "fabricante": nuevo_material.fabricante
+            }
+        }
 
     except Exception as e:
-        # ¡Si algo sale mal, SQLAlchemy se asusta! 
         # Hacemos rollback para "deshacer" el intento y no bloquear la base de datos
         db.rollback()
-        
-        # ¡Y aquí está la magia! Le lanzamos el error exacto a la pantalla de Swagger
-        raise HTTPException(
-            status_code=500, 
-            detail=f"¡Te atrapé fantasma! El error de la BD es: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error en BD: {str(e)}")
 
 # -------------------------------------------------------------------
-# RUTA 2: OBTENER TODOS LOS MATERIALES (Método GET)
+# RUTA 2: OBTENER MIS MATERIALES (Método GET)
 # -------------------------------------------------------------------
-@router.get("/", response_model=List[MaterialControlResponse])
-def obtener_materiales(db: Session = Depends(get_db)):
-    """
-    Devuelve una lista con todos los materiales de control.
-    """
-    materiales = db.query(MaterialControl).filter(MaterialControl.eliminado == False).all()
+@router.get("/api/materiales")
+def obtener_mis_materiales(
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    # 1. Buscar quién es el dueño del carnet
+    lab_actual = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
+    
+    # 2. Traer SOLO los materiales que pertenecen a esta clínica
+    materiales = db.query(MaterialControl).filter(
+        MaterialControl.laboratorio_id == lab_actual.id,
+        MaterialControl.eliminado == False
+    ).all()
+    
     return materiales

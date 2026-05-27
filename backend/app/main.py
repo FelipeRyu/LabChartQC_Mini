@@ -20,7 +20,7 @@ from app.api import (
     metas, 
     reglas
 )
-from app.api import auth
+from app.api import auth , operarios
 
 from app.core.database import engine
 from app.models import models
@@ -52,6 +52,7 @@ app.include_router(areas.router)   # <-- Nueva conexión de Áreas
 app.include_router(metas.router)   # <-- Nueva conexión de Metas
 app.include_router(reglas.router)  # <-- Nueva conexión de Reglas
 app.include_router(auth.router)
+app.include_router(operarios.router)
 
 # Ruta de prueba
 @app.get("/")
