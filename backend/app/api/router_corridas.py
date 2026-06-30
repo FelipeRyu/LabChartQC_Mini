@@ -1,1 +1,0 @@
-"""Endpoints para registrar y consultar resultados de control."""
