@@ -1,1 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
+:root {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+}
+
+/* Glassmorphism custom classes - Steel & Ocean Style */
+.glass-panel {
+  background: rgba(10, 15, 30, 0.85);
+  /* Más sólido y oscuro */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  /* Borde pizarra muy tenue */
+  box-shadow:
+    0 20px 40px -15px rgba(0, 0, 0, 0.9),
+    0 0 40px rgba(30, 41, 59, 0.5);
+  /* Resplandor gris cobalto sobrio en lugar de neón */
+}
+
+.glass-input {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  color: #f1f5f9;
+  transition: all 0.25s ease-in-out;
+}
+
+.glass-input:focus {
+  border-color: rgba(37, 99, 235, 0.5);
+  /* Foco azul cobalto */
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.2);
+  background: rgba(15, 23, 42, 0.9);
+  outline: none;
+}
+
+/* Premium gradient backgrounds - Steel & Ocean (Gris glacial y azul medianoche) */
+.bg-mesh {
+  background-color: #070a13;
+  /* Azul medianoche sólido y profundo */
+  background-image:
+    radial-gradient(at 0% 0%, rgba(30, 41, 59, 0.4) 0px, transparent 60%),
+    radial-gradient(at 100% 0%, rgba(13, 148, 136, 0.1) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(17, 24, 39, 0.5) 0px, transparent 60%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #1d4ed8 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Animaciones globales reutilizables */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.35s ease-out both;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out both;
+}
