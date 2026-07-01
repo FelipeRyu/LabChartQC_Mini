@@ -7,20 +7,22 @@ MISION: Punto de entrada y orquestador del servidor FastAPI.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Importamos todos los enrutadores, incluyendo los 3 nuevos
+# Importamos todos los enrutadores de forma limpia
 from app.api import (
+    auth,
+    operarios,
     materiales, 
     lotes, 
     niveles, 
     analitos, 
     insertos, 
-    operarios, 
     corridas, 
     areas, 
     metas, 
-    reglas
+    reglas,
+    reportes,
+    eventos
 )
-from app.api import auth , operarios
 
 from app.core.database import engine
 from app.models import models
@@ -40,19 +42,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. CONECTAR LAS RUTAS
+# 3. CONECTAR LAS RUTAS (Sin duplicados)
+app.include_router(auth.router)
+app.include_router(operarios.router)
 app.include_router(materiales.router)
 app.include_router(lotes.router)
 app.include_router(niveles.router)
 app.include_router(analitos.router)
 app.include_router(insertos.router)
-app.include_router(operarios.router)
 app.include_router(corridas.router)
-app.include_router(areas.router)   # <-- Nueva conexión de Áreas
-app.include_router(metas.router)   # <-- Nueva conexión de Metas
-app.include_router(reglas.router)  # <-- Nueva conexión de Reglas
-app.include_router(auth.router)
-app.include_router(operarios.router)
+app.include_router(areas.router)
+app.include_router(metas.router)
+app.include_router(reglas.router)
+app.include_router(reportes.router)
+app.include_router(eventos.router)
 
 # Ruta de prueba
 @app.get("/")

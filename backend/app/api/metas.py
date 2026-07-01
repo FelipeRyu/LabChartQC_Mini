@@ -1,20 +1,40 @@
-from fastapi import APIRouter, Depends, status
+# Archivo: app/api/metas.py
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.models.models import MetaCalidad
-from app.schemas.metas import MetaCalidadCreate, MetaCalidadResponse
-from typing import List
+from app.models.models import InsertoValor
+from app.core.security import obtener_usuario_actual
 
-router = APIRouter(prefix="/api/metas", tags=["Metas de Calidad"])
+router = APIRouter(tags=["Metas de Calidad"])
 
-@router.post("/", response_model=MetaCalidadResponse, status_code=status.HTTP_201_CREATED)
-def crear_meta(meta: MetaCalidadCreate, db: Session = Depends(get_db)):
-    nueva_meta = MetaCalidad(**meta.model_dump())
-    db.add(nueva_meta)
-    db.commit()
-    db.refresh(nueva_meta)
-    return nueva_meta
+@router.get("/api/metas/activas/{lote_id}/{analito_id}")
+def obtener_meta_activa(
+    lote_id: int,
+    analito_id: int,
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    """
+    Herencia Automática: Dado un Lote y un Analito, el sistema busca
+    y devuelve automáticamente la Media y Desviación Estándar configurada en el inserto.
+    Esto alimenta el Frontend para que el operario no digite nada manualmente.
+    """
+    # Buscamos el inserto que cruza exactamente este lote con este analito
+    meta = db.query(InsertoValor).filter(
+        InsertoValor.lote_id == lote_id,
+        InsertoValor.analito_id == analito_id
+    ).first()
 
-@router.get("/{analito_id}", response_model=List[MetaCalidadResponse])
-def obtener_metas_por_analito(analito_id: int, db: Session = Depends(get_db)):
-    return db.query(MetaCalidad).filter(MetaCalidad.analito_id == analito_id).all()
+    if not meta:
+        raise HTTPException(
+            status_code=404, 
+            detail="No hay metas configuradas para este Lote y Analito. Por favor, registre el Inserto primero."
+        )
+
+    return {
+        "inserto_id": meta.id_inserto,
+        "media_objetivo": meta.media_objetivo,
+        "ds_objetivo": meta.ds_objetivo,
+        "mensaje": "Metas heredadas exitosamente para la operación"
+    }
