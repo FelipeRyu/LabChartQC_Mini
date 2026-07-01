@@ -65,6 +65,24 @@ def registrar_corrida(
     
     return nueva_corrida
 
+
+# ==========================================
+# RUTAS GET (CONSULTAS)
+# ==========================================
+
+@router.get("/api/corridas", response_model=List[CorridaResponse])
+def obtener_todas_las_corridas(
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    """
+    Entrega el historial de resultados recientes al frontend para
+    alimentar las tablas y cálculos visuales del panel principal.
+    """
+    # Ordenamos de forma descendente para mostrar las más recientes primero
+    return db.query(Corrida).order_by(Corrida.id_corrida.desc()).limit(100).all()
+
+
 @router.get("/api/corridas/inserto/{inserto_id}", response_model=List[CorridaResponse])
 def obtener_corridas_por_inserto(
     inserto_id: int, 

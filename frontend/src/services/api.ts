@@ -1,95 +1,141 @@
+// Archivo: frontend/src/services/api.ts
+
+import axios from 'axios';
+
+// ==========================================
+// 1. CONFIGURACIÓN CENTRAL DE LA API 
+// ==========================================
+const api = axios.create({
+  baseURL: 'http://127.0.0.1:8000',
+});
+
+// ==========================================
+// 2. INTERCEPTOR DE SEGURIDAD (El "Carnet")
+// ==========================================
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ==========================================
+// 3. IMPORTACIÓN DE TIPOS
+// ==========================================
 import {
-  MOCK_MATERIALES_CONTROL,
-  MOCK_CORRIDAS,
-  MOCK_ALERTAS_WESTGARD,
   type MaterialControl,
   type Corrida,
   type AlertaWestgard
 } from '../constants/mockData';
 
-// Función auxiliar para simular latencia de red
-// Función auxiliar para simular latencia de red
-const retrasar = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 // ==========================================
-// MATERIALES DE CONTROL
+// 4. RUTAS DE MATERIALES DE CONTROL
 // ==========================================
 
+/**
+ * Consulta el backend para obtener el catálogo de materiales de control.
+ */
 export const obtenerMateriales = async (): Promise<MaterialControl[]> => {
-  await retrasar(600); // Simulamos 600ms de red
-  // Simulamos leer de un LocalStorage o retornamos MOCK_MATERIALES_CONTROL
-  const almacenados = localStorage.getItem('materialesQC');
-  if (almacenados) {
-    return JSON.parse(almacenados);
-  }
-  return MOCK_MATERIALES_CONTROL;
+  const respuesta = await api.get('/api/materiales');
+  
+  // ADAPTADOR PARA MATERIALES: Protege contra la falta de analitos (el error "al.media")
+  const materialesCrudos = Array.isArray(respuesta.data) ? respuesta.data : [];
+  
+  return materialesCrudos.map((mat: any) => ({
+    id_material: mat.id_material || mat.id || Math.random(),
+    area_id: mat.area_id || 1,
+    area_nombre: mat.area_nombre || "Área General",
+    nombre_material: mat.nombre_material || mat.nombre || "Material BD",
+    fabricante: mat.fabricante || "Desconocido",
+    fecha_vencimiento: mat.fecha_vencimiento || new Date().toISOString(),
+    activo: mat.activo !== undefined ? mat.activo : true,
+    
+    // Escudo para la estructura profunda de niveles y analitos
+    niveles: Array.isArray(mat.niveles) ? mat.niveles.map((niv: any) => ({
+      nivel: niv.nivel || 1,
+      lote: niv.lote || "Lote-000",
+      analitosConfigurados: Array.isArray(niv.analitosConfigurados) ? niv.analitosConfigurados.map((al: any) => ({
+        analito_id: al.analito_id || 1,
+        analito_nombre: al.analito_nombre || "Analito",
+        unidad: al.unidad || "U",
+        media: Number(al.media) || 0, // <--- AQUÍ ESTABA EL ERROR OCULTO
+        ds: Number(al.ds) || 0
+      })) : []
+    })) : []
+  }));
 };
 
+/**
+ * Envía un nuevo material al backend para ser registrado.
+ */
 export const guardarMaterial = async (material: MaterialControl): Promise<MaterialControl> => {
-  await retrasar(800);
-  // Aquí la lógica de guardado en "Base de datos"
-  const actuales = await obtenerMateriales();
-  let nuevos;
-  
-  // Es edición (tiene un ID real > 0 para simplificar, en un entorno real checamos existencia)
-  const existe = actuales.find(m => m.id_material === material.id_material);
-  if (existe) {
-    nuevos = actuales.map(m => m.id_material === material.id_material ? material : m);
-  } else {
-    // Es creación
-    material.id_material = Date.now(); // Generamos un ID falso
-    nuevos = [material, ...actuales];
-  }
-  
-  localStorage.setItem('materialesQC', JSON.stringify(nuevos));
-  return material;
+  const respuesta = await api.post('/api/materiales', material);
+  return respuesta.data;
 };
 
+/**
+ * Ordena al backend eliminar un material específico.
+ */
 export const eliminarMaterial = async (id_material: number): Promise<void> => {
-  await retrasar(500);
-  const actuales = await obtenerMateriales();
-  const nuevos = actuales.filter(m => m.id_material !== id_material);
-  localStorage.setItem('materialesQC', JSON.stringify(nuevos));
+  await api.delete(`/api/materiales/${id_material}`);
 };
 
 // ==========================================
-// CORRIDAS DIARIAS
+// 5. RUTAS DE CORRIDAS (Ingreso de Resultados)
 // ==========================================
 
 export const obtenerCorridas = async (): Promise<Corrida[]> => {
-  await retrasar(500);
-  const almacenados = localStorage.getItem('corridasQC');
-  if (almacenados) {
-    return JSON.parse(almacenados);
-  }
-  return MOCK_CORRIDAS;
+  const respuesta = await api.get('/api/corridas');
+  
+  return respuesta.data.map((item: any) => ({
+    id_corrida: item.id_corrida || item.id || Math.random(),
+    material_id: item.material_id || 1,
+    material_nombre: item.material_nombre || "Material en BD",
+    area_id: item.area_id || 1,
+    area_nombre: item.area_nombre || "Área General",
+    analito_id: item.analito_id || 1,
+    analito_nombre: item.analito_nombre || "Analito Pendiente",
+    nivel: item.nivel || 1,
+    lote: item.lote || "Lote-000",
+    fecha_corrida: item.fecha_corrida || item.fecha || new Date().toISOString(),
+    valor_obtenido: Number(item.valor_obtenido) || 0,
+    z_score: Number(item.z_score) || 0, 
+    aceptada: item.aceptada !== undefined ? item.aceptada : true,
+    observaciones: item.observaciones || "",
+    notas_usuario: item.notas_usuario || ""
+  }));
 };
 
 export const guardarCorridas = async (corridas: Corrida[]): Promise<Corrida[]> => {
-  await retrasar(700);
-  const actuales = await obtenerCorridas();
-  const nuevasCorridas = corridas.map(c => ({ ...c, id: Date.now() + Math.random() }));
-  const todas = [...nuevasCorridas, ...actuales];
-  localStorage.setItem('corridasQC', JSON.stringify(todas));
-  return nuevasCorridas;
+  const respuesta = await api.post('/api/corridas', corridas);
+  return respuesta.data;
 };
 
 // ==========================================
-// ALERTAS WESTGARD
+// 6. RUTAS DE EVENTOS Y ALERTAS WESTGARD
 // ==========================================
 
 export const obtenerAlertas = async (): Promise<AlertaWestgard[]> => {
-  await retrasar(400);
-  const almacenadas = localStorage.getItem('alertasQC');
-  if (almacenadas) {
-    return JSON.parse(almacenadas);
-  }
-  return MOCK_ALERTAS_WESTGARD;
+  const respuesta = await api.get('/api/eventos/alertas');
+  const eventosCrudos = respuesta.data.eventos || [];
+  
+  return eventosCrudos.map((al: any) => ({
+    id: al.id_evento || al.id || Math.random(),
+    analito: al.analito || "Analito Desconocido",
+    area: al.area || "Área General",
+    material: al.material || "Material BD",
+    lote: al.lote || "Lote-000",
+    nivel: String(al.nivel || "1"),
+    regla: al.regla_violada || al.regla || "Regla Westgard",
+    valor: Number(al.valor) || 0,
+    media: Number(al.media) || 0, 
+    ds: Number(al.ds) || 0,
+    z_score: Number(al.z_score) || 0,
+    fecha: al.fecha_evento || al.fecha || new Date().toISOString()
+  }));
 };
 
 export const resolverAlerta = async (id_alerta: number): Promise<void> => {
-  await retrasar(500);
-  const actuales = await obtenerAlertas();
-  const nuevas = actuales.filter(a => a.id !== id_alerta);
-  localStorage.setItem('alertasQC', JSON.stringify(nuevas));
+  await api.put(`/api/eventos/alertas/${id_alerta}/resolver`);
 };
