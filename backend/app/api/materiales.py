@@ -2,82 +2,113 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel
-from typing import Optional
+from typing import List
 from datetime import date
 
 from app.core.database import get_db
-from app.models.models import Laboratorio, MaterialControl
+from app.models.models import Laboratorio, MaterialControl, LoteMaterial, InsertoValor, NivelControl
 from app.core.security import obtener_usuario_actual
 
 router = APIRouter(tags=["Materiales de Control"])
 
-# 1. Molde de datos (Swagger pedirá esto). 
-# ¡Ojo! Ya no pedimos el laboratorio_id porque lo sacamos del carnet.
-class MaterialCreate(BaseModel):
+# ==========================================
+# MOLDES EXACTOS PARA RECIBIR DEL FRONTEND
+# ==========================================
+class AnalitoConfig(BaseModel):
+    analito_id: int
+    unidad: str
+    media: float
+    ds: float
+
+class NivelConfig(BaseModel):
+    nivel: int
+    lote: str
+    analitosConfigurados: List[AnalitoConfig]
+
+class MaterialCreateCompleto(BaseModel):
     nombre_material: str
     fabricante: str
     fecha_vencimiento: date
-    # area_id lo dejamos opcional por si aún no has creado áreas en tu base de datos
-    area_id: Optional[int] = None 
+    area_id: int
+    niveles: List[NivelConfig]
 
-# -------------------------------------------------------------------
-# RUTA 1: CREAR UN NUEVO MATERIAL (Método POST)
-# -------------------------------------------------------------------
+# ==========================================
+# RUTAS DE LA API
+# ==========================================
 @router.post("/api/materiales", status_code=status.HTTP_201_CREATED)
-def crear_material(
-    datos: MaterialCreate, 
+def crear_material_completo(
+    datos: MaterialCreateCompleto, 
     db: Session = Depends(get_db),
-    email_usuario: str = Depends(obtener_usuario_actual) # ¡El Guardia!
+    email_usuario: str = Depends(obtener_usuario_actual)
 ):
-    # 1. Buscar al dueño del carnet
     lab_actual = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
     if not lab_actual:
         raise HTTPException(status_code=404, detail="Laboratorio no encontrado")
 
     try:
-        # 2. Crear material asignando el laboratorio automáticamente
-        nuevo_material = MaterialControl(
-            nombre_material=datos.nombre_material,
-            fabricante=datos.fabricante,
-            fecha_vencimiento=datos.fecha_vencimiento,
-            area_id=datos.area_id,
-            laboratorio_id=lab_actual.id  # Magia de seguridad
-        )
-        
-        db.add(nuevo_material)
+        # 1. ANTIDUPLICADOS: Buscar si ya existe el material (ignorando mayúsculas/minúsculas)
+        nombre_norm = datos.nombre_material.strip().upper()
+        fab_norm = datos.fabricante.strip().upper()
+
+        material_existente = db.query(MaterialControl).filter(
+            func.upper(MaterialControl.nombre_material) == nombre_norm,
+            func.upper(MaterialControl.fabricante) == fab_norm,
+            MaterialControl.laboratorio_id == lab_actual.id
+        ).first()
+
+        if material_existente:
+            nuevo_material = material_existente
+            nuevo_material.fecha_vencimiento = datos.fecha_vencimiento
+        else:
+            nuevo_material = MaterialControl(
+                nombre_material=datos.nombre_material.strip(),
+                fabricante=datos.fabricante.strip(),
+                fecha_vencimiento=datos.fecha_vencimiento,
+                area_id=datos.area_id,
+                laboratorio_id=lab_actual.id
+            )
+            db.add(nuevo_material)
+            db.flush()
+
+        # 2. GUARDAR LOTES Y NIVELES
+        for nivel_data in datos.niveles:
+            nivel_bd = db.query(NivelControl).filter(NivelControl.id == nivel_data.nivel).first()
+            nivel_id_real = nivel_bd.id if nivel_bd else nivel_data.nivel
+
+            nuevo_lote = LoteMaterial(
+                material_id=nuevo_material.id_material,
+                numero_lote=nivel_data.lote.strip().upper(),
+                nivel_control_id=nivel_id_real
+            )
+            db.add(nuevo_lote)
+            db.flush()
+
+            # 3. GUARDAR INSERTOS (Media y DS)
+            for analito_data in nivel_data.analitosConfigurados:
+                nuevo_inserto = InsertoValor(
+                    lote_id=nuevo_lote.id_lote,
+                    analito_id=analito_data.analito_id,
+                    media_objetivo=analito_data.media,
+                    ds_objetivo=analito_data.ds
+                )
+                db.add(nuevo_inserto)
+
         db.commit()
-        db.refresh(nuevo_material)
-        
-        return {
-            "mensaje": "Material de control creado con éxito",
-            "material": {
-                "id_material": nuevo_material.id_material,
-                "nombre": nuevo_material.nombre_material,
-                "fabricante": nuevo_material.fabricante
-            }
-        }
+        return {"mensaje": "Material guardado con éxito"}
 
     except Exception as e:
-        # Hacemos rollback para "deshacer" el intento y no bloquear la base de datos
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error en BD: {str(e)}")
 
-# -------------------------------------------------------------------
-# RUTA 2: OBTENER MIS MATERIALES (Método GET)
-# -------------------------------------------------------------------
 @router.get("/api/materiales")
 def obtener_mis_materiales(
     db: Session = Depends(get_db),
     email_usuario: str = Depends(obtener_usuario_actual)
 ):
-    # 1. Buscar quién es el dueño del carnet
     lab_actual = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
-    
-    # 2. Traer SOLO los materiales que pertenecen a esta clínica
-    materiales = db.query(MaterialControl).filter(
+    return db.query(MaterialControl).filter(
         MaterialControl.laboratorio_id == lab_actual.id,
         MaterialControl.eliminado == False
     ).all()
-    
-    return materiales
