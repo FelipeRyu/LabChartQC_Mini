@@ -1,3 +1,5 @@
+//Archivo frontend/src/pages/PanelPrincipal
+
 import React, { useState, useMemo } from 'react';
 import {
   AREAS,
