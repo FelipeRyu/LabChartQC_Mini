@@ -1,7 +1,6 @@
 import React from 'react';
-import { FileSpreadsheet, Plus, PlayCircle, Database, AreaChart, User } from 'lucide-react';
-// 1. Eliminamos el mock estático y traemos nuestro hook real de autenticación
-import { usarAutenticacion } from '../../context/ContextoAutenticacion';
+import { FileSpreadsheet, Plus, PlayCircle, Database, AreaChart } from 'lucide-react';
+import { LAB_INFO } from '../../constants/mockData';
 
 export type TipoPestana = 'resumen' | 'ingreso' | 'corridas' | 'bitacora' | 'graficas';
 
@@ -15,31 +14,22 @@ interface BarraLateralProps {
  * Utiliza semántica HTML5 (<aside>, <nav>) y provee acceso rápido a todas las vistas.
  */
 export const BarraLateral: React.FC<BarraLateralProps> = ({ pestanaActiva, setPestanaActiva }) => {
-  // 2. Invocamos la memoria de la sesión para saber quién está conectado
-  const { usuario } = usarAutenticacion();
-
   return (
     <aside className="w-full lg:w-80 shrink-0 lg:sticky lg:top-8 bg-[#0b101f]/95 rounded-2xl p-6 shadow-[0_10px_35px_rgba(0,0,0,0.5)] border border-blue-900/40 flex flex-col gap-6">
-      {/* Información del Laboratorio / Usuario */}
+      {/* Información del Laboratorio */}
       <section className="flex flex-col items-center text-center gap-4 pb-5 border-b border-slate-800">
-        
-        {/* Cambiamos el logo estático por un avatar dinámico temporal */}
-        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-900/40 to-slate-800 flex items-center justify-center border border-blue-700/50 shadow-inner">
-           <User className="w-8 h-8 text-blue-400" />
-        </div>
-        
+        <img 
+          src={LAB_INFO.logo_url} 
+          alt="Logo Laboratorio" 
+          className="w-20 h-20 rounded-full object-cover border border-blue-900/30 shadow-inner"
+        />
         <div className="space-y-2">
           <span className="inline-block text-[10px] bg-blue-950/50 text-blue-400 border border-blue-900/50 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-            {usuario?.rol || 'Operador Autorizado'}
+            Sede Autorizada
           </span>
-          
-          {/* 3. Inyectamos el nombre real almacenado en la sesión */}
-          <h2 className="text-base font-bold text-white leading-tight">
-            Laboratorio {usuario?.nombre || 'Principal'}
-          </h2>
-          
-          {/* Mostramos el correo real de conexión */}
-          <p className="text-slate-400 text-[11px]">{usuario?.username || 'Usuario Desconocido'}</p>
+          <h2 className="text-base font-bold text-white leading-tight">{LAB_INFO.nombre}</h2>
+          <p className="text-slate-400 text-[11px]">{LAB_INFO.ciudad}</p>
+          <p className="text-slate-500 text-[10px] font-mono">Código: {LAB_INFO.codigo_habilitacion}</p>
         </div>
       </section>
 
