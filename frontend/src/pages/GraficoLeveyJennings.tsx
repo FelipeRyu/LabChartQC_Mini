@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { AREAS, ANALITOS_POR_AREA, type Corrida } from '../constants/mockData';
+import { type Corrida } from '../constants/types';
+import { AREAS, ANALITOS_POR_AREA } from '../constants/config';
 import { 
   ResponsiveContainer, 
   LineChart, 

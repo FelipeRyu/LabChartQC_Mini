@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type MaterialControl, type Corrida } from '../constants/mockData';
+import { type MaterialControl, type Corrida } from '../constants/types';
 import { calcularZScore, evaluarRegla1_3s } from '../utils/statistics';
 import { PlayCircle, AlertCircle, Save } from 'lucide-react';
 

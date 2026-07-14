@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { type Corrida, AREAS, ANALITOS_POR_AREA } from '../constants/mockData';
+import { type Corrida } from '../constants/types';
+import { AREAS, ANALITOS_POR_AREA } from '../constants/config';
 import { Filter, Database, CheckCircle, AlertTriangle, MessageSquare } from 'lucide-react';
 
 interface BitacoraCalidadProps {

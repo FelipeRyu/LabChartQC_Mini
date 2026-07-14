@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { type MaterialControl } from '../constants/mockData';
+import { type MaterialControl } from '../constants/types';
 
 export type TipoPestana = 'resumen' | 'ingreso' | 'corridas' | 'bitacora' | 'graficas';
 

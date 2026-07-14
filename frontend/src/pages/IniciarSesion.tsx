@@ -27,7 +27,7 @@ export const IniciarSesion: React.FC = () => {
     setMensajeError(null);
     const exito = await iniciarSesion(datos.usuario, datos.contrasena);
     if (exito) {
-      navegar('/dashboard');
+      navegar('/panel-principal');
     } else {
       setMensajeError('Credenciales inválidas. Verifica tu usuario y contraseña.');
     }

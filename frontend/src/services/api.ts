@@ -17,7 +17,7 @@ import {
   type MaterialControl,
   type Corrida,
   type AlertaWestgard,
-} from '../constants/mockData';
+} from '../constants/types';
 
 // ============================================================
 // Tipos que devuelve el backend (respuesta plana de PostgreSQL)
@@ -73,7 +73,7 @@ interface AlertaBackend {
   notas_usuario: string | null;
 }
 
-// Nombres de analitos por ID (basados en mockData para enriquecer respuestas del backend)
+// Nombres de analitos por ID (para enriquecer respuestas planas del backend)
 const NOMBRES_ANALITOS: Record<number, { nombre: string; unidad: string }> = {
   101: { nombre: 'Hemoglobina (Hb)', unidad: 'g/dL' },
   102: { nombre: 'Hematocrito (Hto)', unidad: '%' },

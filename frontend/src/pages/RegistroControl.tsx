@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { AREAS, ANALITOS_POR_AREA, type MaterialControl } from '../constants/mockData';
+import { type MaterialControl } from '../constants/types';
+import { AREAS, ANALITOS_POR_AREA } from '../constants/config';
 import { ChevronRight, ChevronLeft, Save, Plus, Edit } from 'lucide-react';
 
 interface RegistroControlProps {

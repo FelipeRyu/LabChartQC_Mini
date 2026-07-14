@@ -1,10 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import {
-  AREAS,
-  type MaterialControl,
-  type Corrida,
-  type AlertaWestgard
-} from '../constants/mockData';
+import { type MaterialControl, type Corrida, type AlertaWestgard } from '../constants/types';
+import { AREAS } from '../constants/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useEstadoQC } from '../store/useEstadoQC';

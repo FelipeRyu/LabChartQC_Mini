@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileSpreadsheet, Plus, PlayCircle, Database, AreaChart } from 'lucide-react';
-import { LAB_INFO } from '../../constants/mockData';
+import { LAB_INFO } from '../../constants/config';
 
 export type TipoPestana = 'resumen' | 'ingreso' | 'corridas' | 'bitacora' | 'graficas';
 
