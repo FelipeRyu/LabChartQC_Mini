@@ -110,10 +110,10 @@ export const PanelPrincipal: React.FC = () => {
   });
 
   const mutacionResolverAlerta = useMutation({
-    mutationFn: resolverAlerta,
+    mutationFn: ({ id, accion }: { id: number; accion: string }) => resolverAlerta(id, accion),
     onSuccess: () => {
       clienteConsultas.invalidateQueries({ queryKey: ['alertas'] });
-      clienteConsultas.invalidateQueries({ queryKey: ['corridas'] }); // En el mundo real esto recalcula el backend
+      clienteConsultas.invalidateQueries({ queryKey: ['corridas'] });
       toast.success('¡Alerta de Westgard resuelta con éxito!');
       setAlertaEnResolucion(null);
       setTextoAccionResolucion("");
@@ -142,7 +142,7 @@ export const PanelPrincipal: React.FC = () => {
 
   const manejarConfirmarResolucionAlerta = () => {
     if (!alertaEnResolucion) return;
-    mutacionResolverAlerta.mutate(alertaEnResolucion.id);
+    mutacionResolverAlerta.mutate({ id: alertaEnResolucion.id, accion: textoAccionResolucion });
   };
 
   const estaCargandoGlobalmente = estaCargandoMateriales || estaCargandoCorridas || estaCargandoAlertas;

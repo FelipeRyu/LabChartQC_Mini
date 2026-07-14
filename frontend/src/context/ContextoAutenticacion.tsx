@@ -1,8 +1,20 @@
+/**
+ * ARCHIVO: src/context/ContextoAutenticacion.tsx
+ * MISIÓN: Proveedor de autenticación conectado al backend FastAPI real.
+ * 
+ * Flujo:
+ *  1. Al iniciar sesión, hace POST /api/login con OAuth2PasswordRequestForm
+ *  2. Guarda el JWT real en localStorage
+ *  3. Al cargar la app, restaura la sesión si el token existe
+ *  4. Al cerrar sesión, limpia token y datos del usuario
+ */
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiClient } from '../services/apiClient';
 
 interface Usuario {
-  username: string;
-  nombre: string;
+  username: string;   // email del laboratorio
+  nombre: string;     // nombre del laboratorio
   rol: string;
 }
 
@@ -23,7 +35,7 @@ export const ProveedorAutenticacion: React.FC<{ children: React.ReactNode }> = (
   const [estaCargando, setEstaCargando] = useState<boolean>(true);
 
   useEffect(() => {
-    // Restaurar sesión guardada
+    // Restaurar sesión guardada en localStorage
     const tokenGuardado = localStorage.getItem('labchartqc_token');
     const usuarioGuardado = localStorage.getItem('labchartqc_user');
 
@@ -37,27 +49,33 @@ export const ProveedorAutenticacion: React.FC<{ children: React.ReactNode }> = (
   const iniciarSesion = async (username: string, contrasena: string): Promise<boolean> => {
     setEstaCargando(true);
     try {
-      // Simulación de Login temporal (para pruebas offline)
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simula latencia de red
+      // FastAPI usa OAuth2PasswordRequestForm: necesita application/x-www-form-urlencoded
+      const formData = new URLSearchParams();
+      formData.append('username', username);
+      formData.append('password', contrasena);
 
-      if (username.trim() && contrasena.length >= 4) {
-        const usuarioFalso: Usuario = {
-          username: username,
-          nombre: username.charAt(0).toUpperCase() + username.slice(1),
-          rol: 'Administrador',
-        };
-        const tokenFalso = 'jwt-dummy-token-123456';
+      const respuesta = await apiClient.postForm<{ access_token: string; token_type: string }>(
+        '/api/login',
+        formData
+      );
 
-        setUsuario(usuarioFalso);
-        setToken(tokenFalso);
-        localStorage.setItem('labchartqc_token', tokenFalso);
-        localStorage.setItem('labchartqc_user', JSON.stringify(usuarioFalso));
-        setEstaCargando(false);
-        return true;
-      }
+      const tokenReal = respuesta.access_token;
+
+      // Construimos el usuario a partir del email (username es el email en nuestro backend)
+      const usuarioReal: Usuario = {
+        username: username,
+        nombre: username.split('@')[0].charAt(0).toUpperCase() + username.split('@')[0].slice(1),
+        rol: 'Laboratorio',
+      };
+
+      setToken(tokenReal);
+      setUsuario(usuarioReal);
+      localStorage.setItem('labchartqc_token', tokenReal);
+      localStorage.setItem('labchartqc_user', JSON.stringify(usuarioReal));
       setEstaCargando(false);
-      return false;
-    } catch (error) {
+      return true;
+
+    } catch (error: unknown) {
       console.error('Error de login:', error);
       setEstaCargando(false);
       return false;

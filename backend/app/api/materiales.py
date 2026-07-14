@@ -71,13 +71,67 @@ def obtener_mis_materiales(
     db: Session = Depends(get_db),
     email_usuario: str = Depends(obtener_usuario_actual)
 ):
-    # 1. Buscar quién es el dueño del carnet
     lab_actual = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
-    
-    # 2. Traer SOLO los materiales que pertenecen a esta clínica
     materiales = db.query(MaterialControl).filter(
         MaterialControl.laboratorio_id == lab_actual.id,
         MaterialControl.eliminado == False
     ).all()
-    
     return materiales
+
+# -------------------------------------------------------------------
+# RUTA 3: ACTUALIZAR UN MATERIAL (Método PUT)
+# -------------------------------------------------------------------
+@router.put("/api/materiales/{id_material}")
+def actualizar_material(
+    id_material: int,
+    datos: MaterialCreate,
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    lab_actual = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
+    if not lab_actual:
+        raise HTTPException(status_code=404, detail="Laboratorio no encontrado")
+
+    material = db.query(MaterialControl).filter(
+        MaterialControl.id_material == id_material,
+        MaterialControl.laboratorio_id == lab_actual.id,
+        MaterialControl.eliminado == False
+    ).first()
+
+    if not material:
+        raise HTTPException(status_code=404, detail="Material no encontrado o sin acceso")
+
+    material.nombre_material = datos.nombre_material
+    material.fabricante = datos.fabricante
+    material.fecha_vencimiento = datos.fecha_vencimiento
+    material.area_id = datos.area_id
+    db.commit()
+    db.refresh(material)
+    return {"mensaje": "Material actualizado con éxito", "id_material": material.id_material}
+
+# -------------------------------------------------------------------
+# RUTA 4: ELIMINAR UN MATERIAL (Soft Delete — Método DELETE)
+# -------------------------------------------------------------------
+@router.delete("/api/materiales/{id_material}", status_code=status.HTTP_200_OK)
+def eliminar_material(
+    id_material: int,
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    lab_actual = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
+    if not lab_actual:
+        raise HTTPException(status_code=404, detail="Laboratorio no encontrado")
+
+    material = db.query(MaterialControl).filter(
+        MaterialControl.id_material == id_material,
+        MaterialControl.laboratorio_id == lab_actual.id
+    ).first()
+
+    if not material:
+        raise HTTPException(status_code=404, detail="Material no encontrado o sin acceso")
+
+    # Soft delete: marcamos como eliminado en lugar de borrar de la BD
+    material.eliminado = True
+    material.activo = False
+    db.commit()
+    return {"mensaje": "Material eliminado correctamente"}
