@@ -2,7 +2,9 @@
  * ARCHIVO: src/constants/config.ts
  * MISIÓN: Constantes de configuración estática de la aplicación.
  * Estos datos definen las áreas, analitos y opciones de UI.
- * NO son datos mock — son configuración fija del sistema.
+ * 
+ * IMPORTANTE: Los id_analito deben coincidir con los IDs reales
+ * de la tabla 'analitos' en PostgreSQL.
  */
 
 import type { Area } from './types';
@@ -21,26 +23,30 @@ export const AREAS: Area[] = [
   { id: 4, nombre: "Coagulación" }
 ];
 
+/**
+ * Catálogo de analitos por área.
+ * Los IDs corresponden a la tabla 'analitos' de PostgreSQL.
+ */
 export const ANALITOS_POR_AREA: Record<number, { id_analito: number; nombre: string; unidades: string[] }[]> = {
-  1: [ // Hematología
-    { id_analito: 101, nombre: "Hemoglobina (Hb)", unidades: ["g/dL", "g/L"] },
-    { id_analito: 102, nombre: "Hematocrito (Hto)", unidades: ["%", "L/L"] },
-    { id_analito: 103, nombre: "Plaquetas", unidades: ["10^3/µL", "10^9/L"] },
-    { id_analito: 104, nombre: "Leucocitos", unidades: ["10^3/µL", "10^9/L"] }
+  1: [ // Hematología (IDs reales de BD)
+    { id_analito: 76, nombre: "Hemoglobina (Hb)", unidades: ["g/dL", "g/L"] },
+    { id_analito: 77, nombre: "Hematocrito (Hto)", unidades: ["%", "L/L"] },
+    { id_analito: 79, nombre: "Plaquetas", unidades: ["10^3/µL", "10^9/L"] },
+    { id_analito: 81, nombre: "Leucocitos (WBC)", unidades: ["10^3/µL", "10^9/L"] }
   ],
-  2: [ // Química Clínica
-    { id_analito: 201, nombre: "Glucosa", unidades: ["mg/dL", "mmol/L"] },
-    { id_analito: 202, nombre: "Colesterol Total", unidades: ["mg/dL", "mmol/L"] },
-    { id_analito: 203, nombre: "Creatinina", unidades: ["mg/dL", "µmol/L"] },
-    { id_analito: 204, nombre: "Urea", unidades: ["mg/dL", "mmol/L"] }
+  2: [ // Química Clínica (IDs reales de BD)
+    { id_analito: 1, nombre: "Glucosa", unidades: ["mg/dL", "mmol/L"] },
+    { id_analito: 7, nombre: "Colesterol Total", unidades: ["mg/dL", "mmol/L"] },
+    { id_analito: 19, nombre: "Creatinina", unidades: ["mg/dL", "µmol/L"] },
+    { id_analito: 17, nombre: "Urea", unidades: ["mg/dL", "mmol/L"] }
   ],
-  3: [ // Inmunología
-    { id_analito: 301, nombre: "TSH", unidades: ["µUI/mL", "mUI/L"] },
-    { id_analito: 302, nombre: "T4 Libre", unidades: ["ng/dL", "pmol/L"] },
-    { id_analito: 303, nombre: "Troponina I", unidades: ["ng/mL", "µg/L"] }
+  3: [ // Inmunología (IDs reales de BD)
+    { id_analito: 28, nombre: "TSH", unidades: ["µUI/mL", "mUI/L"] },
+    { id_analito: 94, nombre: "T4 Libre", unidades: ["ng/dL", "pmol/L"] },
+    { id_analito: 95, nombre: "Troponina I", unidades: ["ng/mL", "µg/L"] }
   ],
-  4: [ // Coagulación
-    { id_analito: 401, nombre: "TP (Tiempo de Protrombina)", unidades: ["segundos", "INR"] },
-    { id_analito: 402, nombre: "TPT (Tiempo Parcial de Tromboplastina)", unidades: ["segundos"] }
+  4: [ // Coagulación (IDs reales de BD)
+    { id_analito: 72, nombre: "TP (Tiempo de Protrombina)", unidades: ["segundos", "INR"] },
+    { id_analito: 73, nombre: "TPT (Tiempo Parcial de Tromboplastina)", unidades: ["segundos"] }
   ]
 };

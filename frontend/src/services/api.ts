@@ -18,6 +18,7 @@ import {
   type Corrida,
   type AlertaWestgard,
 } from '../constants/types';
+import { ANALITOS_POR_AREA } from '../constants/config';
 
 // ============================================================
 // Tipos que devuelve el backend (respuesta plana de PostgreSQL)
@@ -73,21 +74,17 @@ interface AlertaBackend {
   notas_usuario: string | null;
 }
 
-// Nombres de analitos por ID (para enriquecer respuestas planas del backend)
-const NOMBRES_ANALITOS: Record<number, { nombre: string; unidad: string }> = {
-  101: { nombre: 'Hemoglobina (Hb)', unidad: 'g/dL' },
-  102: { nombre: 'Hematocrito (Hto)', unidad: '%' },
-  103: { nombre: 'Plaquetas', unidad: '10^3/µL' },
-  104: { nombre: 'Leucocitos', unidad: '10^3/µL' },
-  201: { nombre: 'Glucosa', unidad: 'mg/dL' },
-  202: { nombre: 'Colesterol Total', unidad: 'mg/dL' },
-  203: { nombre: 'Creatinina', unidad: 'mg/dL' },
-  204: { nombre: 'Urea', unidad: 'mg/dL' },
-  301: { nombre: 'TSH', unidad: 'µUI/mL' },
-  302: { nombre: 'T4 Libre', unidad: 'ng/dL' },
-  303: { nombre: 'Troponina I', unidad: 'ng/mL' },
-  401: { nombre: 'TP (Tiempo de Protrombina)', unidad: 'segundos' },
-  402: { nombre: 'TPT', unidad: 'segundos' },
+// ============================================================
+// Helper: Buscar nombre de analito por ID usando el catálogo real
+// ============================================================
+const buscarInfoAnalito = (analitoId: number): { nombre: string; unidad: string } => {
+  for (const areaAnalitos of Object.values(ANALITOS_POR_AREA)) {
+    const encontrado = areaAnalitos.find(a => a.id_analito === analitoId);
+    if (encontrado) {
+      return { nombre: encontrado.nombre, unidad: encontrado.unidades[0] };
+    }
+  }
+  return { nombre: `Analito #${analitoId}`, unidad: 'unidad' };
 };
 
 const NOMBRES_AREAS: Record<number, string> = {
@@ -129,13 +126,16 @@ export const obtenerMateriales = async (): Promise<MaterialControl[]> => {
                 return {
                   nivel,
                   lote: lote.numero_lote,
-                  analitosConfigurados: insertos.map((ins) => ({
-                    analito_id: ins.analito_id,
-                    analito_nombre: NOMBRES_ANALITOS[ins.analito_id]?.nombre ?? `Analito #${ins.analito_id}`,
-                    unidad: NOMBRES_ANALITOS[ins.analito_id]?.unidad ?? 'unidad',
-                    media: ins.media_objetivo,
-                    ds: ins.ds_objetivo,
-                  })),
+                  analitosConfigurados: insertos.map((ins) => {
+                    const info = buscarInfoAnalito(ins.analito_id);
+                    return {
+                      analito_id: ins.analito_id,
+                      analito_nombre: info.nombre,
+                      unidad: info.unidad,
+                      media: ins.media_objetivo,
+                      ds: ins.ds_objetivo,
+                    };
+                  }),
                 };
               })
           );
@@ -173,6 +173,18 @@ export const obtenerMateriales = async (): Promise<MaterialControl[]> => {
   }
 };
 
+// ============================================================
+// Tipo de respuesta real del POST /api/materiales del backend
+// ============================================================
+interface MaterialCreateResponse {
+  mensaje: string;
+  material: {
+    id_material: number;
+    nombre: string;
+    fabricante: string;
+  };
+}
+
 export const guardarMaterial = async (material: MaterialControl): Promise<MaterialControl> => {
   try {
     const payload = {
@@ -184,8 +196,14 @@ export const guardarMaterial = async (material: MaterialControl): Promise<Materi
 
     if (material.id_material && material.id_material > 1000000) {
       // ID generado localmente (nuevo material que aún no existe en BD)
-      const respuesta = await apiClient.post<{ id_material: number }>('/api/materiales', payload);
-      const nuevoId = respuesta.id_material;
+      // FIX BUG 2: El backend devuelve { mensaje, material: { id_material } }
+      const respuesta = await apiClient.post<MaterialCreateResponse>('/api/materiales', payload);
+      const nuevoId = respuesta.material.id_material;
+
+      if (!nuevoId) {
+        console.error('[API] El backend no devolvió id_material:', respuesta);
+        throw new Error('No se pudo obtener el ID del material creado');
+      }
 
       // Crear lotes e insertos asociados al nuevo material
       await _crearLotesEInsertos(nuevoId, material);
@@ -214,7 +232,10 @@ const _crearLotesEInsertos = async (materialId: number, material: MaterialContro
       });
 
       const idLote = loteResp.lote?.id_lote;
-      if (!idLote) continue;
+      if (!idLote) {
+        console.warn(`[API] No se obtuvo id_lote de la respuesta:`, loteResp);
+        continue;
+      }
 
       // Crear insertos para cada analito del nivel
       for (const an of nivelObj.analitosConfigurados) {
@@ -249,23 +270,26 @@ export const obtenerCorridas = async (): Promise<Corrida[]> => {
     const corridas = await apiClient.get<CorridaBackend[]>('/api/corridas');
 
     // Transformar respuesta plana del backend al tipo enriquecido del frontend
-    return corridas.map((c) => ({
-      id_corrida: c.id_corrida,
-      material_id: 0, // No disponible directamente, se resolvería con join futuro
-      material_nombre: `Inserto #${c.inserto_id}`,
-      area_id: 0,
-      area_nombre: 'Ver BD',
-      analito_id: 0,
-      analito_nombre: `Inserto #${c.inserto_id}`,
-      nivel: 1,
-      lote: '-',
-      fecha_corrida: c.fecha_corrida,
-      valor_obtenido: c.valor_obtenido,
-      z_score: 0, // El backend no retorna z_score en GET, solo evalúa en POST
-      aceptada: c.aceptada,
-      observaciones: c.observaciones ?? undefined,
-      notas_usuario: c.notas_usuario ?? undefined,
-    }));
+    return corridas.map((c) => {
+      const info = buscarInfoAnalito(0); // Se necesitaría un join en el backend para resolver esto
+      return {
+        id_corrida: c.id_corrida,
+        material_id: 0,
+        material_nombre: `Inserto #${c.inserto_id}`,
+        area_id: 0,
+        area_nombre: 'Ver BD',
+        analito_id: 0,
+        analito_nombre: `Inserto #${c.inserto_id}`,
+        nivel: 1,
+        lote: '-',
+        fecha_corrida: c.fecha_corrida,
+        valor_obtenido: c.valor_obtenido,
+        z_score: 0,
+        aceptada: c.aceptada,
+        observaciones: c.observaciones ?? undefined,
+        notas_usuario: c.notas_usuario ?? undefined,
+      };
+    });
   } catch (error) {
     console.error('[API] Error al obtener corridas:', error);
     throw error;
@@ -274,20 +298,18 @@ export const obtenerCorridas = async (): Promise<Corrida[]> => {
 
 export const guardarCorridas = async (corridas: Corrida[]): Promise<Corrida[]> => {
   try {
-    // El backend evalúa Westgard automáticamente en POST /api/corridas
-    // Necesitamos inserto_id: usamos la configuración del material para hallarlo
     const resultados: Corrida[] = [];
 
     for (const corrida of corridas) {
       try {
-        // Buscar el inserto_id correcto desde el backend
+        // FIX BUG 1: Buscar el inserto_id correcto usando el analito_id real (sincronizado con BD)
         const insertos = await apiClient.get<InsertoBackend[]>(
           `/api/insertos/por-analito-nivel?analito_id=${corrida.analito_id}&lote_nombre=${encodeURIComponent(corrida.lote)}`
         );
 
         const inserto = insertos?.[0];
         if (!inserto) {
-          console.warn(`[API] No se encontró inserto para analito ${corrida.analito_id} nivel ${corrida.nivel}`);
+          console.warn(`[API] No se encontró inserto para analito ${corrida.analito_id} (${corrida.analito_nombre}) lote "${corrida.lote}"`);
           continue;
         }
 
@@ -295,7 +317,6 @@ export const guardarCorridas = async (corridas: Corrida[]): Promise<Corrida[]> =
           inserto_id: inserto.id_inserto,
           valor_obtenido: corrida.valor_obtenido,
           notas_usuario: corrida.notas_usuario || corrida.observaciones || '',
-          // operario_id: no requerido si el backend lo hace opcional
         });
 
         resultados.push({
@@ -335,7 +356,6 @@ export const obtenerAlertas = async (): Promise<AlertaWestgard[]> => {
       const reglaMatch = notas.match(/(\d_\d+s|R_4s)/);
       const regla = reglaMatch ? reglaMatch[0] : 'Westgard';
 
-      // Calcular z-score aproximado si tenemos acceso a los datos (o mostramos 0)
       return {
         id: ev.id_corrida,
         analito: `Inserto #${ev.inserto_id}`,

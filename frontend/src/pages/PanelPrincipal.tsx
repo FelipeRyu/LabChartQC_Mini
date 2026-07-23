@@ -57,8 +57,8 @@ export const PanelPrincipal: React.FC = () => {
   const [alertaEnResolucion, setAlertaEnResolucion] = useState<AlertaWestgard | null>(null);
   const [textoAccionResolucion, setTextoAccionResolucion] = useState("");
 
-  // Fecha actual de referencia del sistema
-  const CURRENT_DATE = useMemo(() => new Date("2026-06-09"), []);
+  // Fecha actual de referencia del sistema (usa fecha real)
+  const CURRENT_DATE = useMemo(() => new Date(), []);
 
   // Cálculos derivados memorizados para optimizar rendimiento
   const materialesVigentes = useMemo(
