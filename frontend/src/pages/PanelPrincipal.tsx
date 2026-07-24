@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { type MaterialControl, type Corrida, type AlertaWestgard } from '../constants/types';
-import { AREAS } from '../constants/config';
+import { AREAS, categoriaToAreaId } from '../constants/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useEstadoQC } from '../store/useEstadoQC';
 import {
   obtenerMateriales, guardarMaterial, eliminarMaterial,
   obtenerCorridas, guardarCorridas,
-  obtenerAlertas, resolverAlerta
+  obtenerAlertas, resolverAlerta,
+  obtenerAnalitos
 } from '../services/api';
 import { RegistroControl } from './RegistroControl';
 import { RegistroCorridas } from './RegistroCorridas';
@@ -52,6 +53,26 @@ export const PanelPrincipal: React.FC = () => {
     queryKey: ['alertas'],
     queryFn: obtenerAlertas
   });
+
+  const { data: analitosDB = [] } = useQuery({
+    queryKey: ['analitos'],
+    queryFn: obtenerAnalitos
+  });
+
+  const analitosPorArea = useMemo(() => {
+    const map: Record<number, { id_analito: number; nombre: string; unidades: string[] }[]> = {};
+    analitosDB.forEach(a => {
+      if (!a.activo) return;
+      const areaId = categoriaToAreaId(a.categoria);
+      if (!map[areaId]) map[areaId] = [];
+      map[areaId].push({
+        id_analito: a.id_analito,
+        nombre: a.nombre,
+        unidades: [a.unidad_medida]
+      });
+    });
+    return map;
+  }, [analitosDB]);
 
   // Estados interactivos para resolución de alertas
   const [alertaEnResolucion, setAlertaEnResolucion] = useState<AlertaWestgard | null>(null);
@@ -425,6 +446,7 @@ export const PanelPrincipal: React.FC = () => {
                 materialEnEdicion={materialEnEdicion || undefined}
                 onSave={manejarGuardarNuevoMaterial}
                 onCancel={() => setPestanaActiva('resumen')}
+                analitosPorArea={analitosPorArea}
               />
             )}
 
@@ -434,17 +456,18 @@ export const PanelPrincipal: React.FC = () => {
                 materialesVigentes={materialesVigentes}
                 onSave={manejarGuardarNuevasCorridas}
                 onCancel={() => setPestanaActiva('resumen')}
+                analitosPorArea={analitosPorArea}
               />
             )}
 
             {/* Pestaña: Bitácora de Resultados */}
             {pestanaActiva === 'bitacora' && (
-              <BitacoraCalidad corridas={corridas} />
+              <BitacoraCalidad corridas={corridas} analitosPorArea={analitosPorArea} />
             )}
 
             {/* Pestaña: Gráficas Levey-Jennings */}
             {pestanaActiva === 'graficas' && (
-              <GraficoLeveyJennings corridas={corridas} />
+              <GraficoLeveyJennings corridas={corridas} analitosPorArea={analitosPorArea} />
             )}
 
           </div>

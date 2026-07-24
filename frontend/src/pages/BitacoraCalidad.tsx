@@ -5,9 +5,10 @@ import { Filter, Database, CheckCircle, AlertTriangle, MessageSquare } from 'luc
 
 interface BitacoraCalidadProps {
   corridas: Corrida[];
+  analitosPorArea?: Record<number, { id_analito: number; nombre: string; unidades: string[] }[]>;
 }
 
-export const BitacoraCalidad: React.FC<BitacoraCalidadProps> = ({ corridas }) => {
+export const BitacoraCalidad: React.FC<BitacoraCalidadProps> = ({ corridas, analitosPorArea }) => {
   // Filtros iniciales: rango de los últimos 15 días (desde mayo 25 hasta junio 15, 2026)
   const [fechaInicio, setFechaInicio] = useState(() => {
     const d = new Date(); d.setMonth(d.getMonth() - 1);
@@ -19,7 +20,7 @@ export const BitacoraCalidad: React.FC<BitacoraCalidadProps> = ({ corridas }) =>
   // Analito seleccionado (id_analito o 0 para todos)
   const [analitoId, setAnalitoId] = useState<number>(0); // Hemoglobina por defecto
 
-  const filteredAnalitosList = ANALITOS_POR_AREA[areaId] || [];
+  const filteredAnalitosList = (analitosPorArea ?? ANALITOS_POR_AREA)[areaId] || [];
 
   // Filtrar las corridas en base a los criterios (Memorizado para performance)
   const corridasFiltradas = useMemo(() => {
@@ -82,7 +83,7 @@ export const BitacoraCalidad: React.FC<BitacoraCalidadProps> = ({ corridas }) =>
                 setAreaId(newAreaId);
                 
                 // Actualizar automáticamente al primer analito del área nueva
-                const list = ANALITOS_POR_AREA[newAreaId] || [];
+                const list = (analitosPorArea ?? ANALITOS_POR_AREA)[newAreaId] || [];
                 if (list.length > 0) {
                   setAnalitoId(list[0].id_analito);
                 } else {

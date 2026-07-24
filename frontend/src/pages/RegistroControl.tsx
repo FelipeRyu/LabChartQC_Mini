@@ -7,6 +7,7 @@ interface RegistroControlProps {
   materialEnEdicion?: MaterialControl;
   onSave: (nuevoMaterial: MaterialControl) => void;
   onCancel: () => void;
+  analitosPorArea?: Record<number, { id_analito: number; nombre: string; unidades: string[] }[]>;
 }
 
 /**
@@ -14,7 +15,7 @@ interface RegistroControlProps {
  * Responsabilidad: Wizard (Asistente) de 3 pasos para registrar o editar un material de control.
  * Se implementa con etiquetas HTML5 semánticas (<form>, <fieldset>, <legend>) para mayor accesibilidad.
  */
-export const RegistroControl: React.FC<RegistroControlProps> = ({ materialEnEdicion, onSave, onCancel }) => {
+export const RegistroControl: React.FC<RegistroControlProps> = ({ materialEnEdicion, onSave, onCancel, analitosPorArea }) => {
   const [pasoActual, setPasoActual] = useState(1);
 
   // Paso 1 State (Información Básica)
@@ -144,7 +145,7 @@ export const RegistroControl: React.FC<RegistroControlProps> = ({ materialEnEdic
       nivel: lvl,
       lote: lotesNivel[lvl],
       analitosConfigurados: analitos.map(analitoId => {
-        const analitoMeta = ANALITOS_POR_AREA[areaId].find(a => a.id_analito === analitoId);
+        const analitoMeta = (analitosPorArea ?? ANALITOS_POR_AREA)[areaId].find(a => a.id_analito === analitoId);
         const configVal = configuraciones[`${analitoId}-${lvl}`];
         return {
           analito_id: analitoId,
@@ -168,7 +169,7 @@ export const RegistroControl: React.FC<RegistroControlProps> = ({ materialEnEdic
     });
   };
 
-  const listaAnalitosActivos = ANALITOS_POR_AREA[areaId] || [];
+  const listaAnalitosActivos = (analitosPorArea ?? ANALITOS_POR_AREA)[areaId] || [];
 
   return (
     <section className="glass-panel rounded-2xl p-8 shadow-xl max-w-4xl mx-auto border border-slate-800/80 animate-fadeIn">

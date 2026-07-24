@@ -17,6 +17,7 @@ import { obtenerColorZScore } from '../utils/statistics';
 
 interface GraficoLeveyJenningsProps {
   corridas: Corrida[];
+  analitosPorArea?: Record<number, { id_analito: number; nombre: string; unidades: string[] }[]>;
 }
 
 // Renderizador personalizado de puntos (marcadores geométricos) para los niveles
@@ -57,7 +58,8 @@ const RenderCustomDot = (props: any) => {
 };
 
 export const GraficoLeveyJennings: React.FC<GraficoLeveyJenningsProps> = ({ 
-  corridas 
+  corridas,
+  analitosPorArea 
 }) => {
   // Configuración de Filtros
   const [modo, setModo] = useState<'analito' | 'area'>('analito');
@@ -85,7 +87,7 @@ export const GraficoLeveyJennings: React.FC<GraficoLeveyJenningsProps> = ({
   // Analitos seleccionados (Solo para modo Área, por defecto todos)
   const [selectedAnalytesArea, setSelectedAnalytesArea] = useState<Record<number, boolean>>({});
 
-  const filteredAnalitosList = ANALITOS_POR_AREA[areaId] || [];
+  const filteredAnalitosList = (analitosPorArea ?? ANALITOS_POR_AREA)[areaId] || [];
 
   // Toggle de nivel
   const handleLevelToggle = (lvl: number) => {
@@ -338,7 +340,7 @@ export const GraficoLeveyJennings: React.FC<GraficoLeveyJenningsProps> = ({
               onChange={(e) => {
                 const newAreaId = Number(e.target.value);
                 setAreaId(newAreaId);
-                const list = ANALITOS_POR_AREA[newAreaId] || [];
+                const list = (analitosPorArea ?? ANALITOS_POR_AREA)[newAreaId] || [];
                 if (list.length > 0) setAnalitoId(list[0].id_analito);
                 setSelectedAnalytesArea({});
               }}

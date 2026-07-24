@@ -261,6 +261,27 @@ export const eliminarMaterial = async (id_material: number): Promise<void> => {
   }
 };
 
+// ==========================================
+// ANALITOS (Catálogo dinámico desde BD)
+// ==========================================
+
+interface AnalitoBackend {
+  id_analito: number;
+  nombre: string;
+  categoria: string;
+  unidad_medida: string;
+  activo: boolean;
+}
+
+export const obtenerAnalitos = async (): Promise<AnalitoBackend[]> => {
+  try {
+    return await apiClient.get<AnalitoBackend[]>('/api/analitos');
+  } catch (error) {
+    console.error('[API] Error al obtener analitos:', error);
+    return [];
+  }
+};
+
 // Tipo que devuelve el endpoint enriquecido
 interface CorridaEnriquecida {
   id_corrida: number;

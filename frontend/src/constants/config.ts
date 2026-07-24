@@ -20,11 +20,23 @@ export const AREAS: Area[] = [
   { id: 1, nombre: "Hematología" },
   { id: 2, nombre: "Química Clínica" },
   { id: 3, nombre: "Inmunología" },
-  { id: 4, nombre: "Coagulación" }
+  { id: 4, nombre: "Coagulación" },
+  { id: 5, nombre: "Endocrinología" }
 ];
 
+/** Maps a DB categoria string to an area ID */
+export const categoriaToAreaId = (categoria: string): number => {
+  const cat = categoria.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (cat.includes('hematolog')) return 1;
+  if (cat.includes('quimica') || cat.includes('qumica')) return 2;
+  if (cat.includes('inmunolog')) return 3;
+  if (cat.includes('hemostasia') || cat.includes('coagulac')) return 4;
+  if (cat.includes('endocrinolog') || cat.includes('hormon')) return 5;
+  return 2; // default to Química Clínica
+};
+
 /**
- * Catálogo de analitos por área.
+ * Catálogo de analitos por área. (Fallback local si no carga BD)
  * Los IDs corresponden a la tabla 'analitos' de PostgreSQL.
  */
 export const ANALITOS_POR_AREA: Record<number, { id_analito: number; nombre: string; unidades: string[] }[]> = {

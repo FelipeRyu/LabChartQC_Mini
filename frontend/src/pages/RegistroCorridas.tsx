@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { type MaterialControl, type Corrida } from '../constants/types';
 import { calcularZScore, evaluarRegla1_3s } from '../utils/statistics';
-import { PlayCircle, FlaskConical, Beaker, Save, AlertCircle } from 'lucide-react';
+import { PlayCircle, FlaskConical, Beaker, Save, AlertCircle, MessageSquare } from 'lucide-react';
 
 interface RegistroCorridasProps {
   materialesVigentes: MaterialControl[];
@@ -18,16 +18,19 @@ export const RegistroCorridas: React.FC<RegistroCorridasProps> = ({
   const [analitoId, setAnalitoId] = useState<number | null>(null);
   const [valores, setValores] = useState<Record<number, string>>({});
   const [success, setSuccess] = useState(false);
+  const [notasUsuario, setNotasUsuario] = useState('');
 
   useEffect(() => {
     // Reiniciar analito y valores cuando cambia el material
     setAnalitoId(null);
     setValores({});
+    setNotasUsuario('');
   }, [materialId]);
 
   useEffect(() => {
     // Reiniciar valores cuando cambia el analito
     setValores({});
+    setNotasUsuario('');
   }, [analitoId]);
 
   const materialActivo = useMemo(() => 
@@ -88,7 +91,7 @@ export const RegistroCorridas: React.FC<RegistroCorridasProps> = ({
           z_score: Number(zScore.toFixed(2)),
           aceptada: !viola1_3s,
           observaciones: justificacionRechazo,
-          notas_usuario: ''
+          notas_usuario: notasUsuario
         });
       }
     });
@@ -261,6 +264,22 @@ export const RegistroCorridas: React.FC<RegistroCorridasProps> = ({
                       );
                     })}
                   </div>
+                </div>
+              )}
+
+              {/* Paso 4: Notas del Microbiólogo */}
+              {analitoId && materialActivo && (
+                <div className="bg-slate-900/50 p-5 rounded-2xl border border-slate-800/80 animate-fadeIn">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-blue-400" />
+                    Notas del Microbiólogo (opcional)
+                  </label>
+                  <textarea
+                    placeholder="Ej: Cambio de reactivo, recalibración, muestra hemolizada..."
+                    value={notasUsuario}
+                    onChange={(e) => setNotasUsuario(e.target.value)}
+                    className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all resize-y min-h-[80px]"
+                  />
                 </div>
               )}
 
