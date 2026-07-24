@@ -261,35 +261,50 @@ export const eliminarMaterial = async (id_material: number): Promise<void> => {
   }
 };
 
-// ==========================================
-// CORRIDAS DIARIAS
-// ==========================================
+// Tipo que devuelve el endpoint enriquecido
+interface CorridaEnriquecida {
+  id_corrida: number;
+  fecha_corrida: string;
+  valor_obtenido: number;
+  aceptada: boolean;
+  observaciones: string | null;
+  notas_usuario: string | null;
+  inserto_id: number;
+  media: number;
+  ds: number;
+  z_score: number;
+  analito_id: number;
+  analito_nombre: string;
+  unidad: string;
+  lote: string;
+  nivel: number;
+  material_id: number;
+  material_nombre: string;
+  area_id: number;
+}
 
 export const obtenerCorridas = async (): Promise<Corrida[]> => {
   try {
-    const corridas = await apiClient.get<CorridaBackend[]>('/api/corridas');
+    // Usar endpoint enriquecido que hace JOINs en el backend
+    const corridas = await apiClient.get<CorridaEnriquecida[]>('/api/corridas/enriquecidas');
 
-    // Transformar respuesta plana del backend al tipo enriquecido del frontend
-    return corridas.map((c) => {
-      const info = buscarInfoAnalito(0); // Se necesitaría un join en el backend para resolver esto
-      return {
-        id_corrida: c.id_corrida,
-        material_id: 0,
-        material_nombre: `Inserto #${c.inserto_id}`,
-        area_id: 0,
-        area_nombre: 'Ver BD',
-        analito_id: 0,
-        analito_nombre: `Inserto #${c.inserto_id}`,
-        nivel: 1,
-        lote: '-',
-        fecha_corrida: c.fecha_corrida,
-        valor_obtenido: c.valor_obtenido,
-        z_score: 0,
-        aceptada: c.aceptada,
-        observaciones: c.observaciones ?? undefined,
-        notas_usuario: c.notas_usuario ?? undefined,
-      };
-    });
+    return corridas.map((c) => ({
+      id_corrida: c.id_corrida,
+      material_id: c.material_id,
+      material_nombre: c.material_nombre,
+      area_id: c.area_id,
+      area_nombre: NOMBRES_AREAS[c.area_id] ?? 'Área General',
+      analito_id: c.analito_id,
+      analito_nombre: c.analito_nombre,
+      nivel: c.nivel,
+      lote: c.lote,
+      fecha_corrida: c.fecha_corrida,
+      valor_obtenido: c.valor_obtenido,
+      z_score: c.z_score,
+      aceptada: c.aceptada,
+      observaciones: c.observaciones ?? undefined,
+      notas_usuario: c.notas_usuario ?? undefined,
+    }));
   } catch (error) {
     console.error('[API] Error al obtener corridas:', error);
     throw error;

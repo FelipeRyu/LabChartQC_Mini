@@ -61,10 +61,13 @@ export const GraficoLeveyJennings: React.FC<GraficoLeveyJenningsProps> = ({
 }) => {
   // Configuración de Filtros
   const [modo, setModo] = useState<'analito' | 'area'>('analito');
-  const [areaId, setAreaId] = useState<number>(1); // Hematología
-  const [analitoId, setAnalitoId] = useState<number>(101); // Hb por defecto
-  const [fechaInicio, setFechaInicio] = useState("2026-05-01");
-  const [fechaFin, setFechaFin] = useState("2026-06-15");
+  const [areaId, setAreaId] = useState<number>(2); // Hematología
+  const [analitoId, setAnalitoId] = useState<number>(1); // Hb por defecto
+  const [fechaInicio, setFechaInicio] = useState(() => {
+    const d = new Date(); d.setMonth(d.getMonth() - 1);
+    return d.toISOString().substring(0, 10);
+  });
+  const [fechaFin, setFechaFin] = useState(() => new Date().toISOString().substring(0, 10));
   
   // Mostrar u ocultar línea conectora
   const [showConnectionLine, setShowConnectionLine] = useState(true);

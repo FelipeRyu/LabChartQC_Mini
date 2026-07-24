@@ -9,12 +9,15 @@ interface BitacoraCalidadProps {
 
 export const BitacoraCalidad: React.FC<BitacoraCalidadProps> = ({ corridas }) => {
   // Filtros iniciales: rango de los últimos 15 días (desde mayo 25 hasta junio 15, 2026)
-  const [fechaInicio, setFechaInicio] = useState("2026-06-01");
-  const [fechaFin, setFechaFin] = useState("2026-06-15");
-  const [areaId, setAreaId] = useState<number>(1); // Hematología por defecto
+  const [fechaInicio, setFechaInicio] = useState(() => {
+    const d = new Date(); d.setMonth(d.getMonth() - 1);
+    return d.toISOString().substring(0, 10);
+  });
+  const [fechaFin, setFechaFin] = useState(() => new Date().toISOString().substring(0, 10));
+  const [areaId, setAreaId] = useState<number>(2); // Hematología por defecto
   
   // Analito seleccionado (id_analito o 0 para todos)
-  const [analitoId, setAnalitoId] = useState<number>(101); // Hemoglobina por defecto
+  const [analitoId, setAnalitoId] = useState<number>(0); // Hemoglobina por defecto
 
   const filteredAnalitosList = ANALITOS_POR_AREA[areaId] || [];
 

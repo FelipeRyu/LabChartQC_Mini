@@ -100,3 +100,74 @@ def obtener_corridas_por_inserto(
     email_usuario: str = Depends(obtener_usuario_actual)
 ):
     return db.query(Corrida).filter(Corrida.inserto_id == inserto_id).all()
+
+
+# ==========================================
+# ENDPOINT ENRIQUECIDO (para Bitácora y Gráfico)
+# ==========================================
+
+@router.get("/api/corridas/enriquecidas")
+def obtener_corridas_enriquecidas(
+    db: Session = Depends(get_db),
+    email_usuario: str = Depends(obtener_usuario_actual)
+):
+    """
+    Devuelve corridas con JOINs completos para que el frontend
+    pueda filtrar por área, analito, nivel y mostrar nombres.
+    Cadena: Corrida → InsertoValor → LoteMaterial → MaterialControl + Analito
+    """
+    from app.models.models import LoteMaterial, MaterialControl, Analito
+
+    resultados = (
+        db.query(
+            Corrida,
+            InsertoValor,
+            LoteMaterial,
+            MaterialControl,
+            Analito
+        )
+        .join(InsertoValor, Corrida.inserto_id == InsertoValor.id_inserto)
+        .join(LoteMaterial, InsertoValor.lote_id == LoteMaterial.id_lote)
+        .join(MaterialControl, LoteMaterial.material_id == MaterialControl.id_material)
+        .join(Analito, InsertoValor.analito_id == Analito.id_analito)
+        .order_by(Corrida.id_corrida.desc())
+        .limit(200)
+        .all()
+    )
+
+    corridas_enriquecidas = []
+    for corrida, inserto, lote, material, analito in resultados:
+        # Calcular Z-Score
+        z_score = 0.0
+        if inserto.ds_objetivo and inserto.ds_objetivo != 0:
+            z_score = round(
+                (corrida.valor_obtenido - inserto.media_objetivo) / inserto.ds_objetivo,
+                2
+            )
+
+        corridas_enriquecidas.append({
+            "id_corrida": corrida.id_corrida,
+            "fecha_corrida": corrida.fecha_corrida.isoformat() if corrida.fecha_corrida else None,
+            "valor_obtenido": corrida.valor_obtenido,
+            "aceptada": corrida.aceptada,
+            "observaciones": corrida.observaciones,
+            "notas_usuario": corrida.notas_usuario,
+            # Datos del inserto
+            "inserto_id": inserto.id_inserto,
+            "media": inserto.media_objetivo,
+            "ds": inserto.ds_objetivo,
+            "z_score": z_score,
+            # Datos del analito
+            "analito_id": analito.id_analito,
+            "analito_nombre": analito.nombre,
+            "unidad": analito.unidad_medida,
+            # Datos del lote
+            "lote": lote.numero_lote,
+            "nivel": lote.nivel_control_id or 1,
+            # Datos del material
+            "material_id": material.id_material,
+            "material_nombre": material.nombre_material,
+            "area_id": material.area_id or 0,
+        })
+
+    return corridas_enriquecidas
