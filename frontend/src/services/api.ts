@@ -386,7 +386,7 @@ export const obtenerAlertas = async (): Promise<AlertaWestgard[]> => {
     const eventos = respuesta.eventos ?? [];
 
     // Transformar corridas rechazadas al tipo AlertaWestgard del frontend
-    return eventos.map((ev, idx) => {
+    return eventos.map((ev) => {
       // Extraer la regla violada del campo notas_usuario (el backend la guarda ahí)
       const notas = ev.notas_usuario ?? '';
       const reglaMatch = notas.match(/(\d_\d+s|R_4s)/);

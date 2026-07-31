@@ -456,7 +456,6 @@ export const PanelPrincipal: React.FC = () => {
                 materialesVigentes={materialesVigentes}
                 onSave={manejarGuardarNuevasCorridas}
                 onCancel={() => setPestanaActiva('resumen')}
-                analitosPorArea={analitosPorArea}
               />
             )}
 
