@@ -106,7 +106,8 @@ export const GraficoLeveyJennings: React.FC<GraficoLeveyJenningsProps> = ({
     const corridasFiltradas = corridas
       .filter(c => {
         if (c.analito_id !== analitoId) return false;
-        if (c.area_id !== areaId) return false;
+        // Ignoramos c.area_id del material porque el material podría estar mal configurado.
+        // Solo importa que sea el analito correcto.
         if (!selectedLevels[c.nivel]) return false;
         
         const fecha = c.fecha_corrida.substring(0, 10);
@@ -158,9 +159,12 @@ export const GraficoLeveyJennings: React.FC<GraficoLeveyJenningsProps> = ({
     // Filtrar corridas del área y del nivel elegido
     const corridasFiltradas = corridas
       .filter(c => {
-        if (c.area_id !== areaId) return false;
         if (c.nivel !== selectedSingleLevel) return false;
         
+        // Verificamos si el analito pertenece al área seleccionada
+        const analitosDelAreaIds = filteredAnalitosList.map(a => a.id_analito);
+        if (!analitosDelAreaIds.includes(c.analito_id)) return false;
+
         // Si hay analitos filtrados por checkbox (si no hay ninguno marcado, se muestran todos)
         const activeFilterIds = Object.entries(selectedAnalytesArea)
           .filter(([_, sel]) => sel)

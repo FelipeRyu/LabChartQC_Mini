@@ -28,6 +28,36 @@ import {
   Edit
 } from 'lucide-react';
 
+const SUGERENCIAS_RESOLUCION: Record<string, string[]> = {
+  '1_3s': [
+    'Se repitió la corrida tras limpieza de aguja y se obtuvo resultado aceptable.',
+    'Error aleatorio identificado; se purgó el sistema de fluidos.',
+    'Posible burbuja en reactivo. Se revisó y se repitió la muestra.'
+  ],
+  '2_2s': [
+    'Error sistemático. Se recalibró el equipo y se repitió el control.',
+    'Reactivo deteriorado. Se cambió lote de reactivo y se recalibró.',
+    'Control degradado. Se preparó un nuevo vial de control.'
+  ],
+  'R_4s': [
+    'Error aleatorio grande. Se realizó mantenimiento diario y se repitió.',
+    'Variación excesiva. Se revisó el sistema de pipeteo.'
+  ],
+  '4_1s': [
+    'Tendencia observada. Se realizó calibración preventiva.',
+    'Revisión de curva de calibración e inspección de lámpara.'
+  ],
+  '10_x': [
+    'Cambio de tendencia sistemático. Mantenimiento general realizado.',
+    'Cambio de lote de reactivo registrado en el sistema.'
+  ],
+  'Westgard': [
+    'Se repitió la corrida analítica.',
+    'Se realizó mantenimiento preventivo.',
+    'Se preparó nuevo material de control.'
+  ]
+};
+
 export const PanelPrincipal: React.FC = () => {
   const clienteConsultas = useQueryClient();
 
@@ -490,10 +520,28 @@ export const PanelPrincipal: React.FC = () => {
                 <label htmlFor="resolvingAction" className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
                   Acción Correctiva Realizada
                 </label>
+                
+                {/* Opciones sugeridas (Chips) */}
+                <div className="mb-3">
+                  <p className="text-[10px] text-slate-400 mb-1.5 font-semibold">Sugerencias rápidas para la regla {alertaEnResolucion.regla}:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(SUGERENCIAS_RESOLUCION[alertaEnResolucion.regla] || SUGERENCIAS_RESOLUCION['Westgard']).map((sug, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setTextoAccionResolucion(sug)}
+                        className="text-left px-3 py-1.5 text-xs bg-slate-800/80 hover:bg-rose-900/40 border border-slate-700 hover:border-rose-500/50 rounded-lg text-slate-300 transition-colors cursor-pointer"
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <textarea
                   id="resolvingAction"
-                  className="w-full bg-slate-900 text-white border border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500 outline-none transition-all h-24 resize-none"
-                  placeholder="Ej: Se repitió la corrida tras limpieza de aguja..."
+                  className="w-full bg-slate-900 text-white border border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500 outline-none transition-all h-24 resize-none mt-2"
+                  placeholder="Escribe aquí o selecciona una sugerencia arriba..."
                   value={textoAccionResolucion}
                   onChange={(e) => setTextoAccionResolucion(e.target.value)}
                 ></textarea>

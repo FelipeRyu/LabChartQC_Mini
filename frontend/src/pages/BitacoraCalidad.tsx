@@ -15,26 +15,39 @@ export const BitacoraCalidad: React.FC<BitacoraCalidadProps> = ({ corridas, anal
     return d.toISOString().substring(0, 10);
   });
   const [fechaFin, setFechaFin] = useState(() => new Date().toISOString().substring(0, 10));
-  const [areaId, setAreaId] = useState<number>(2); // Hematología por defecto
+  const [areaId, setAreaId] = useState<number>(0); // 0 = Todas las áreas
   
   // Analito seleccionado (id_analito o 0 para todos)
-  const [analitoId, setAnalitoId] = useState<number>(0); // Hemoglobina por defecto
+  const [analitoId, setAnalitoId] = useState<number>(0);
 
-  const filteredAnalitosList = (analitosPorArea ?? ANALITOS_POR_AREA)[areaId] || [];
+  const filteredAnalitosList = useMemo(() => {
+    if (areaId === 0) {
+      const all = Object.values(analitosPorArea ?? ANALITOS_POR_AREA).flat();
+      const unique = Array.from(new Map(all.map(item => [item.id_analito, item])).values());
+      return unique;
+    }
+    return (analitosPorArea ?? ANALITOS_POR_AREA)[areaId] || [];
+  }, [areaId, analitosPorArea]);
 
   // Filtrar las corridas en base a los criterios (Memorizado para performance)
   const corridasFiltradas = useMemo(() => {
     return corridas.filter(c => {
-      // 1. Filtrar por área
-      if (c.area_id !== areaId) return false;
+      // 1. Filtrar por área (basado en el analito, no en el material, para evitar desajustes si el material está mal configurado)
+      if (areaId !== 0) {
+        const analitosDelAreaIds = filteredAnalitosList.map(a => a.id_analito);
+        if (!analitosDelAreaIds.includes(Number(c.analito_id))) return false;
+      }
       
       // 2. Filtrar por analito específico
-      if (analitoId !== 0 && c.analito_id !== analitoId) return false;
+      if (analitoId !== 0 && Number(c.analito_id) !== analitoId) return false;
 
       // 3. Filtrar por rango de fecha (usando substring, más rápido que split)
-      const fechaCorrida = c.fecha_corrida.substring(0, 10);
-      if (fechaInicio && fechaCorrida < fechaInicio) return false;
-      if (fechaFin && fechaCorrida > fechaFin) return false;
+      // Asegurarse de que fecha_corrida existe antes de hacer substring
+      if (c.fecha_corrida) {
+        const fechaCorrida = c.fecha_corrida.substring(0, 10);
+        if (fechaInicio && fechaCorrida < fechaInicio) return false;
+        if (fechaFin && fechaCorrida > fechaFin) return false;
+      }
 
       return true;
     });
@@ -81,16 +94,10 @@ export const BitacoraCalidad: React.FC<BitacoraCalidadProps> = ({ corridas, anal
               onChange={(e) => {
                 const newAreaId = Number(e.target.value);
                 setAreaId(newAreaId);
-                
-                // Actualizar automáticamente al primer analito del área nueva
-                const list = (analitosPorArea ?? ANALITOS_POR_AREA)[newAreaId] || [];
-                if (list.length > 0) {
-                  setAnalitoId(list[0].id_analito);
-                } else {
-                  setAnalitoId(0);
-                }
+                setAnalitoId(0); // Resetear analito al cambiar de área
               }}
             >
+              <option value="0">-- Todas las áreas --</option>
               {AREAS.map(a => (
                 <option key={a.id} value={a.id}>{a.nombre}</option>
               ))}

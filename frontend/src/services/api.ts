@@ -69,8 +69,16 @@ interface CorridaBackend {
 
 interface AlertaBackend {
   id_corrida: number;
-  operario_id: number | null;
   inserto_id: number;
+  analito_id: number;
+  analito_nombre: string;
+  unidad: string;
+  material_nombre: string;
+  numero_lote: string;
+  nivel: string;
+  area_id: number;
+  media: number;
+  ds: number;
   fecha_corrida: string;
   valor_obtenido: number;
   aceptada: boolean;
@@ -320,7 +328,7 @@ export const obtenerCorridas = async (): Promise<Corrida[]> => {
       area_id: c.area_id,
       area_nombre: NOMBRES_AREAS[c.area_id] ?? 'Área General',
       analito_id: c.analito_id,
-      analito_nombre: c.analito_nombre,
+      analito_nombre: buscarInfoAnalito(c.analito_id).nombre || c.analito_nombre,
       nivel: c.nivel,
       lote: c.lote,
       fecha_corrida: c.fecha_corrida,
@@ -395,19 +403,20 @@ export const obtenerAlertas = async (): Promise<AlertaWestgard[]> => {
       const notas = ev.notas_usuario ?? '';
       const reglaMatch = notas.match(/(\d_\d+s|R_4s)/);
       const regla = reglaMatch ? reglaMatch[0] : 'Westgard';
+      const z_score = ev.ds > 0 ? (ev.valor_obtenido - ev.media) / ev.ds : 0;
 
       return {
         id: ev.id_corrida,
-        analito: `Inserto #${ev.inserto_id}`,
-        area: 'Ver BD',
-        material: `Inserto #${ev.inserto_id}`,
-        lote: '-',
-        nivel: 'N/A',
+        analito: ev.analito_nombre || `Analito #${ev.analito_id}`,
+        area: NOMBRES_AREAS[ev.area_id] || 'Área General',
+        material: ev.material_nombre || 'Control',
+        lote: ev.numero_lote || '-',
+        nivel: ev.nivel || 'N/A',
         regla,
         valor: ev.valor_obtenido,
-        media: 0,
-        ds: 0,
-        z_score: 0,
+        media: ev.media,
+        ds: ev.ds,
+        z_score: parseFloat(z_score.toFixed(2)),
         fecha: ev.fecha_corrida,
       } as AlertaWestgard;
     });
