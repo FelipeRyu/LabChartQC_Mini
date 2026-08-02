@@ -1,0 +1,16 @@
+# Archivo: .gitignore (en la raíz del proyecto)
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# Variables de entorno (¡CRÍTICO PARA LA SEGURIDAD!)
+.env
+
+# Archivos cacheados de Python
+__pycache__/
+*.pyc
+
+# Configuraciones del editor
+.vscode/
