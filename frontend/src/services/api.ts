@@ -48,6 +48,9 @@ interface InsertoBackend {
   id_inserto: number;
   lote_id: number;
   analito_id: number;
+  // Campos enriquecidos devueltos por el backend (JOIN con tabla analitos)
+  analito_nombre?: string;
+  unidad_medida?: string;
   media_objetivo: number;
   ds_objetivo: number;
   activo: boolean;
@@ -127,11 +130,12 @@ export const obtenerMateriales = async (): Promise<MaterialControl[]> => {
                   nivel,
                   lote: lote.numero_lote,
                   analitosConfigurados: insertos.map((ins) => {
-                    const info = buscarInfoAnalito(ins.analito_id);
+                    // Usar nombre del backend si está disponible; fallback al catálogo local
+                    const fallback = buscarInfoAnalito(ins.analito_id);
                     return {
                       analito_id: ins.analito_id,
-                      analito_nombre: info.nombre,
-                      unidad: info.unidad,
+                      analito_nombre: ins.analito_nombre || fallback.nombre,
+                      unidad: ins.unidad_medida || fallback.unidad,
                       media: ins.media_objetivo,
                       ds: ins.ds_objetivo,
                     };

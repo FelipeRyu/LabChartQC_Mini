@@ -60,5 +60,29 @@ export const ANALITOS_POR_AREA: Record<number, { id_analito: number; nombre: str
   4: [ // Coagulación (IDs reales de BD)
     { id_analito: 72, nombre: "TP (Tiempo de Protrombina)", unidades: ["segundos", "INR"] },
     { id_analito: 73, nombre: "TPT (Tiempo Parcial de Tromboplastina)", unidades: ["segundos"] }
+  ],
+  5: [ // Endocrinología (IDs reales de BD)
+    { id_analito: 28, nombre: "TSH",                            unidades: ["µUI/mL", "mUI/L"] },
+    { id_analito: 29, nombre: "T4 - Tiroxina Total",            unidades: ["µg/dL", "nmol/L"] },
+    { id_analito: 30, nombre: "T4 - Tiroxina Libre",            unidades: ["ng/dL", "pmol/L"] },
+    { id_analito: 31, nombre: "T3 - Triyodotironina Total",     unidades: ["ng/dL", "nmol/L"] },
+    { id_analito: 32, nombre: "T3 - Triyodotironina Libre",     unidades: ["pg/mL", "pmol/L"] },
+    { id_analito: 33, nombre: "Testosterona Total",             unidades: ["ng/dL", "nmol/L"] },
+    { id_analito: 34, nombre: "Testosterona Libre",             unidades: ["pg/mL", "pmol/L"] },
+    { id_analito: 35, nombre: "Progesterona",                   unidades: ["ng/mL", "nmol/L"] },
+    { id_analito: 36, nombre: "Estradiol",                      unidades: ["pg/mL", "pmol/L"] },
+    { id_analito: 37, nombre: "FSH - Foliculoestimulante",      unidades: ["mUI/mL", "UI/L"] },
+    { id_analito: 38, nombre: "LH - Luteinizante",              unidades: ["mUI/mL", "UI/L"] },
+    { id_analito: 39, nombre: "Prolactina",                     unidades: ["ng/mL", "µg/L"] },
+    { id_analito: 40, nombre: "AMH - Antimulleriana",           unidades: ["ng/mL", "pmol/L"] },
+    { id_analito: 41, nombre: "PTH - Paratohormona",            unidades: ["pg/mL", "pmol/L"] },
+    { id_analito: 42, nombre: "Cortisol",                       unidades: ["µg/dL", "nmol/L"] },
+    { id_analito: 43, nombre: "Insulina",                       unidades: ["µUI/mL", "pmol/L"] },
+    { id_analito: 44, nombre: "GH - Somatotropina",             unidades: ["ng/mL", "µg/L"] },
+    { id_analito: 45, nombre: "ACTH - Adrenocorticotropica",    unidades: ["pg/mL", "pmol/L"] },
+    { id_analito: 46, nombre: "Aldosterona",                    unidades: ["ng/dL", "pmol/L"] },
+    { id_analito: 47, nombre: "IGF-1 - Crecimiento Insulínico", unidades: ["ng/mL", "nmol/L"] },
+    { id_analito: 60, nombre: "Beta-HCG",                       unidades: ["mUI/mL", "UI/L"] },
+    { id_analito: 89, nombre: "TSH",                            unidades: ["µUI/mL", "mUI/L"] }
   ]
 };

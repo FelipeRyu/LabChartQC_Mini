@@ -27,17 +27,72 @@ def obtener_alertas_westgard(
 ):
     """
     Escanea el sistema y devuelve únicamente las corridas que fueron rechazadas
-    debido a la violación de una Regla de Westgard. Ideal para el Dashboard principal.
+    debido a la violación de una Regla de Westgard. Incluye nombre del analito,
+    material, lote y nivel para mostrar en el panel de alertas críticas.
     """
-    # Filtramos donde 'aceptada' sea False (es decir, violó una regla de Westgard)
-    alertas = db.query(Corrida).filter(
-        Corrida.aceptada == False
-    ).order_by(Corrida.fecha_corrida.desc()).all()
+    from app.models.models import InsertoValor, LoteMaterial, MaterialControl, Analito, NivelControl, Laboratorio
+
+    # Obtener el laboratorio del usuario autenticado
+    lab = db.query(Laboratorio).filter(Laboratorio.email == email_usuario).first()
+    lab_id = lab.id if lab else None
+
+    # JOIN completo: Corrida → Inserto → Analito, Lote → Material → Laboratorio, Nivel
+    query = (
+        db.query(
+            Corrida,
+            Analito.nombre.label("analito_nombre"),
+            Analito.unidad_medida.label("unidad"),
+            LoteMaterial.numero_lote.label("numero_lote"),
+            LoteMaterial.nivel_control_id.label("nivel_control_id"),
+            MaterialControl.nombre_material.label("material_nombre"),
+            MaterialControl.area_id.label("area_id"),
+            InsertoValor.analito_id.label("analito_id"),
+            InsertoValor.media_objetivo.label("media"),
+            InsertoValor.ds_objetivo.label("ds"),
+        )
+        .join(InsertoValor, Corrida.inserto_id == InsertoValor.id_inserto)
+        .join(Analito, InsertoValor.analito_id == Analito.id_analito)
+        .join(LoteMaterial, InsertoValor.lote_id == LoteMaterial.id_lote)
+        .join(MaterialControl, LoteMaterial.material_id == MaterialControl.id_material)
+        .filter(Corrida.aceptada == False)
+        .order_by(Corrida.fecha_corrida.desc())
+    )
+
+    # Filtrar por laboratorio si está disponible
+    if lab_id:
+        query = query.filter(MaterialControl.laboratorio_id == lab_id)
+
+    resultados = query.all()
+
+    eventos = []
+    for row in resultados:
+        corrida = row[0]
+        nivel_num = row.nivel_control_id or 1  # 1=Bajo, 2=Normal, 3=Alto
+        nivel_nombre = {1: "Bajo", 2: "Normal", 3: "Alto"}.get(nivel_num, f"Nivel {nivel_num}")
+
+        eventos.append({
+            "id_corrida": corrida.id_corrida,
+            "inserto_id": corrida.inserto_id,
+            "analito_id": row.analito_id,
+            "analito_nombre": row.analito_nombre or f"Analito #{row.analito_id}",
+            "unidad": row.unidad or "",
+            "material_nombre": row.material_nombre or "Control",
+            "numero_lote": row.numero_lote or "-",
+            "nivel": nivel_nombre,
+            "area_id": row.area_id,
+            "media": row.media or 0,
+            "ds": row.ds or 0,
+            "fecha_corrida": corrida.fecha_corrida.isoformat() if corrida.fecha_corrida else "",
+            "valor_obtenido": corrida.valor_obtenido,
+            "aceptada": corrida.aceptada,
+            "notas_usuario": corrida.notas_usuario,
+        })
 
     return {
-        "total_alertas": len(alertas),
-        "eventos": alertas
+        "total_alertas": len(eventos),
+        "eventos": eventos
     }
+
 
 
 @router.patch("/api/eventos/{corrida_id}/resolver", status_code=status.HTTP_200_OK)

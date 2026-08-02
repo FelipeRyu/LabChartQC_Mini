@@ -72,7 +72,8 @@ def obtener_insertos_por_lote(
     db: Session = Depends(get_db),
     email_usuario: str = Depends(obtener_usuario_actual)
 ):
-    """Devuelve todos los insertos (media/DS de analitos) configurados para un lote."""
+    """Devuelve todos los insertos (media/DS de analitos) configurados para un lote,
+    incluyendo el nombre y unidad del analito para evitar que el frontend muestre 'Analito #ID'."""
     lab_id = obtener_lab_id(db, email_usuario)
     if not lab_id:
         raise HTTPException(status_code=404, detail="Laboratorio no encontrado")
@@ -86,12 +87,39 @@ def obtener_insertos_por_lote(
     if not lote_db:
         raise HTTPException(status_code=403, detail="Lote no encontrado o sin acceso")
 
-    insertos = db.query(InsertoValor).filter(
-        InsertoValor.lote_id == lote_id,
-        InsertoValor.activo == True
-    ).all()
+    from app.models.models import Analito
+    from sqlalchemy.orm import joinedload
 
-    return insertos
+    insertos = (
+        db.query(InsertoValor)
+        .filter(InsertoValor.lote_id == lote_id, InsertoValor.activo == True)
+        .all()
+    )
+
+    # Obtener los nombres de analito en un solo query adicional
+    analito_ids = [i.analito_id for i in insertos]
+    analitos_map = {}
+    if analito_ids:
+        analitos = db.query(Analito).filter(Analito.id_analito.in_(analito_ids)).all()
+        analitos_map = {a.id_analito: a for a in analitos}
+
+    # Serializar manualmente incluyendo nombre y unidad
+    resultado = []
+    for ins in insertos:
+        analito = analitos_map.get(ins.analito_id)
+        resultado.append({
+            "id_inserto": ins.id_inserto,
+            "lote_id": ins.lote_id,
+            "analito_id": ins.analito_id,
+            "analito_nombre": analito.nombre if analito else f"Analito #{ins.analito_id}",
+            "unidad_medida": analito.unidad_medida if analito else "unidad",
+            "media_objetivo": ins.media_objetivo,
+            "ds_objetivo": ins.ds_objetivo,
+            "activo": ins.activo,
+        })
+
+    return resultado
+
 
 
 # -------------------------------------------------------------------
