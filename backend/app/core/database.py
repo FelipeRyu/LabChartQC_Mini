@@ -1,34 +1,29 @@
-# Archivo: app/core/database.py
-
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
 
-# Cargar variables de entorno
-load_dotenv()
+# --- PRODUCCIÓN / RENDER ---
+# Leemos directamente del sistema. Si no existe, FALLAMOS (no usamos fallback)
+SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# --- CAMBIO PARA PRODUCCIÓN (RENDER) ---
-# Leemos la URL desde las variables de entorno de Render. Si no existe, usamos la local.
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:admin@localhost:5432/labchart_mini_db")
+# Si estamos en local (sin variable), usamos el fallback
+if not SQLALCHEMY_DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL = "postgresql://postgres:admin@localhost:5432/labchart_mini_db"
+    print("🖥️  MODO LOCAL detectado. Conectando a localhost.")
+else:
+    print(f"☁️  MODO RENDER detectado. Conectando a: {SQLALCHEMY_DATABASE_URL.split('@')[1]}")
 
-# Crear el "Motor"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"client_encoding": "utf8"}
 )
 
-# Crear la fábrica de Sesiones
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# La Clase Base
 Base = declarative_base()
 
-# Dependencia de la Base de Datos
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-        
