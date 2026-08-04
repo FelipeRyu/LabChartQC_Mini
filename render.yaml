@@ -35,4 +35,4 @@ services:
         fromService:
           type: web
           name: labchartqc-backend
-          property: url
+          property: host
