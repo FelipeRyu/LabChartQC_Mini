@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.models.models import Laboratorio
+from app.core.cargar_semilla import cargar_datos_semilla_si_esta_vacio
 
 # Importamos la nueva función del guardia
 from app.core.security import (
@@ -68,3 +69,14 @@ def ver_mi_perfil(email_usuario: str = Depends(obtener_usuario_actual)):
         "mensaje": "¡El candado funciona! Entraste a la zona segura.", 
         "usuario_conectado": email_usuario
     }
+
+# --- CARGAR O REINTENTAR DATOS SEMILLA EN PRODUCCIÓN (RENDER) ---
+@router.post("/api/cargar-semilla")
+@router.get("/api/cargar-semilla")
+def ejecutar_cargar_semilla(force: bool = False, db: Session = Depends(get_db)):
+    """
+    Endpoint para cargar o forzar la recarga de datos semilla (Laboratorios, Operarios, Analitos, Materiales, Corridas, etc.).
+    Útil para entornos en la nube como Render.
+    """
+    resultado = cargar_datos_semilla_si_esta_vacio(db, force=force)
+    return resultado

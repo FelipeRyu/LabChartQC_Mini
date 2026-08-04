@@ -1,0 +1,107 @@
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Glucosa','Quimica clinica','string','mg/dL',true),
+	 ('AST','Química Clínica','enzimas','U/L',true),
+	 ('Calcio','Química Clínica','Electrolitos','mg/dL',true),
+	 ('Potasio','Química Clínica','Electrolitos','mEq/L',true),
+	 ('Sodio','Química Clínica','Electrolitos','mEq/L',true),
+	 ('Trigliceridos','Química Clínica','Lípidos','mg/dL',true),
+	 ('Colesterol Total','Química Clínica','Lípidos','mg/dL',true),
+	 ('Colesterol Hdl','Química Clínica','Lípidos','mg/dL',true),
+	 ('Colesterol Ldl','Química Clínica','Lípidos','mg/dL',true),
+	 ('Alt-Gpt','Química Clínica','Enzimología / Perfil Hepático','U/L',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Ast-Got','Química Clínica','Enzimología / Perfil Hepático','U/L',true),
+	 ('Albumina','Química Clínica','Proteínas','g/dL',true),
+	 ('Alp-Fa','Química Clínica','Enzimología / Perfil Hepático','U/L',true),
+	 ('Bilirrubina','Química Clínica','Perfil Hepático','mg/dL',true),
+	 ('Ggt','Química Clínica','Enzimología / Perfil Hepático','U/L',true),
+	 ('Ldh','Química Clínica','Enzimología','U/L',true),
+	 ('Urea','Química Clínica','Función Renal','mg/dL',true),
+	 ('Bun','Química Clínica','Función Renal','mg/dL',true),
+	 ('Creatinina','Química Clínica','Función Renal','mg/dL',true),
+	 ('Calcio (Ca)','Química Clínica','Electrolitos / Minerales','mg/dL',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Sodio (Na)','Química Clínica','Electrolitos','mEq/L',true),
+	 ('Cloro (Cl)','Química Clínica','Electrolitos','mEq/L',true),
+	 ('Potasio (K)','Química Clínica','Electrolitos','mEq/L',true),
+	 ('Pao2','Química Clínica','Gases Arteriales','mmHg',true),
+	 ('Paco2','Química Clínica','Gases Arteriales','mmHg',true),
+	 ('Hco3 - Bicarbonato','Química Clínica','Gases Arteriales','mEq/L',true),
+	 ('Ph','Química Clínica','Gases Arteriales','unidades de pH',true),
+	 ('Tsh','Endocrinología','Perfil Tiroideo','μUI/mL',true),
+	 ('T4 - Tiroxina Total','Endocrinología','Perfil Tiroideo','μg/dL',true),
+	 ('T4 - Tiroxina Libre','Endocrinología','Perfil Tiroideo','ng/dL',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('T3 - Triyodotironina Total','Endocrinología','Perfil Tiroideo','ng/dL',true),
+	 ('T3 - Triyodotironina Libre','Endocrinología','Perfil Tiroideo','pg/mL',true),
+	 ('Testosterona Total','Endocrinología','Hormonas Sexuales','ng/dL',true),
+	 ('Testosterona Libre','Endocrinología','Hormonas Sexuales','pg/mL',true),
+	 ('Progesterona','Endocrinología','Hormonas Sexuales','ng/mL',true),
+	 ('Estradiol','Endocrinología','Hormonas Sexuales','pg/mL',true),
+	 ('Fsh - Foliculoestimulante','Endocrinología','Hormonas Sexuales','mUI/mL',true),
+	 ('Lh - Luteinizante','Endocrinología','Hormonas Sexuales','mUI/mL',true),
+	 ('Prolactina','Endocrinología','Hormonas Hipofisiarias','ng/mL',true),
+	 ('Amh - Antimulleriana','Endocrinología','Reserva Ovárica','ng/mL',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Pth-Paratohormona','Endocrinología','Metabolismo Óseo','pg/mL',true),
+	 ('Cortisol','Endocrinología','Eje Adrenal','μg/dL',true),
+	 ('Insulina','Endocrinología','Metabolismo','μUI/mL',true),
+	 ('Gh - Somatotropina','Endocrinología','Hormona de Crecimiento','ng/mL',true),
+	 ('Acth - Adrenocorticotropica','Endocrinología','Eje Adrenal','pg/mL',true),
+	 ('Aldosterona','Endocrinología','Eje Adrenal','ng/dL',true),
+	 ('Igf-1 - Crecimiento Insulinico','Endocrinología','Hormona de Crecimiento','ng/mL',true),
+	 ('Vit. B12 - Cobalamina','Química Clínica','Vitaminas','pg/mL',true),
+	 ('Vit. B9 - Acido Folico','Química Clínica','Vitaminas','ng/mL',true),
+	 ('Vit. D (D-25-Oh)','Química Clínica','Vitaminas','ng/mL',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Hierro','Química Clínica','Metabolismo de Hierro','μg/dL',true),
+	 ('Magnesio','Química Clínica','Electrolitos / Minerales','mg/dL',true),
+	 ('Fosforo','Química Clínica','Electrolitos / Minerales','mg/dL',true),
+	 ('Ferritina','Inmunología','Metabolismo de Hierro','ng/mL',true),
+	 ('Pcr','Inmunología','Marcadores de Inflamación','mg/L',true),
+	 ('Psa Total','Inmunología','Marcadores Tumorales','ng/mL',true),
+	 ('Psa Libre','Inmunología','Marcadores Tumorales','ng/mL',true),
+	 ('Transferrina','Inmunología','Metabolismo de Hierro','mg/dL',true),
+	 ('Cea - Carcinoembrionario','Inmunología','Marcadores Tumorales','ng/mL',true),
+	 ('Beta-Hcg','Endocrinología / Inmunología','Marcadores de Gestación / Tumorales','mUI/mL',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Afp - Alfafetoproteina','Inmunología','Marcadores Tumorales','ng/mL',true),
+	 ('Ck - Protein Cinasa','Química Clínica','Enzimología','U/L',true),
+	 ('Bnp - Cardiaco','Química Clínica','Marcadores Cardíacos','pg/mL',true),
+	 ('Nt-Probnp - Cardiaco','Química Clínica','Marcadores Cardíacos','pg/mL',true),
+	 ('Ca19-9 (Pancreas)','Inmunología','Marcadores Tumorales','U/mL',true),
+	 ('Ca15-3 (Mama)','Inmunología','Marcadores Tumorales','U/mL',true),
+	 ('Ca125 (Ovario)','Inmunología','Marcadores Tumorales','U/mL',true),
+	 ('Ca27.29 (Mama)','Inmunología','Marcadores Tumorales','U/mL',true),
+	 ('C3 - Complemento','Inmunología','Sistema de Complemento','mg/dL',true),
+	 ('C4 - Complemento','Inmunología','Sistema de Complemento','mg/dL',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Hba1C - Glicosilada','Química Clínica','Metabolismo de Carbohidratos','%',true),
+	 ('Pt - Protrombina','Hemostasia','Coagulación','segundos',true),
+	 ('Ptt - Tromboplastina','Hemostasia','Coagulación','segundos',true),
+	 ('Fibrinogeno','Hemostasia','Coagulación','mg/dL',true),
+	 ('Rbc - Recuento Rojos','Hematología','Serie Roja','10^6/μL',true),
+	 ('Hb - Hemoglobina','Hematología','Serie Roja','g/dL',true),
+	 ('Hct - Hematocrito','Hematología','Serie Roja','%',true),
+	 ('Vcm - Volumen Corpuscular','Hematología','Serie Roja','fL',true),
+	 ('Plt - Recuento Plaquetas','Hematología','Serie Plaquetaria','10^3/μL',true),
+	 ('Mvp - Volumen Plaquetario','Hematología','Serie Plaquetaria','fL',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Wbc - Recuento Blancos','Hematología','Serie Blanca','10^3/μL',true),
+	 ('Neu - Neutrofilos','Hematología','Serie Blanca','10^3/μL',true),
+	 ('Lym - Linfocitos','Hematología','Serie Blanca','10^3/μL',true),
+	 ('Mon - Monocitos','Hematología','Serie Blanca','10^3/μL',true),
+	 ('Eos - Eosinofilos','Hematología','Serie Blanca','10^3/μL',true),
+	 ('Bas - Basofilos','Hematología','Serie Blanca','10^3/μL',true),
+	 ('Ig - Inmaduros','Hematología','Serie Blanca','10^3/μL',true),
+	 ('Triglicéridos','QUIMICA CLINICA','PERFIL LIPIDICO',NULL,true),
+	 ('TSH','HORMONAS','PERFIL TIROIDEO',NULL,true),
+	 ('Hemoglobina (Hb)','Hematologia',NULL,'g/dL',true);
+INSERT INTO public.analitos (nombre,categoria,subcategoria,unidad_medida,activo) VALUES
+	 ('Hematocrito (Hto)','Hematologia',NULL,'%',true),
+	 ('Plaquetas','Hematologia',NULL,'10^3/uL',true),
+	 ('Leucocitos','Hematologia',NULL,'10^3/uL',true),
+	 ('T4 Libre','Inmunologia',NULL,'ng/dL',true),
+	 ('Troponina I','Inmunologia',NULL,'ng/mL',true),
+	 ('TP (Tiempo de Protrombina)','Coagulacion',NULL,'segundos',true),
+	 ('TPT','Coagulacion',NULL,'segundos',true);

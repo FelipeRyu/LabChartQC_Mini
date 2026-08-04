@@ -3,15 +3,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # --- PRODUCCIÓN / RENDER ---
-# Leemos directamente del sistema. Si no existe, FALLAMOS (no usamos fallback)
+# Leemos directamente del sistema. Si no existe, usamos fallback para entorno local.
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL")
 
 # Si estamos en local (sin variable), usamos el fallback
 if not SQLALCHEMY_DATABASE_URL:
     SQLALCHEMY_DATABASE_URL = "postgresql://postgres:admin@localhost:5432/labchart_mini_db"
-    print("🖥️  MODO LOCAL detectado. Conectando a localhost.")
+    print("[BD] MODO LOCAL detectado. Conectando a localhost.")
 else:
-    print(f"☁️  MODO RENDER detectado. Conectando a: {SQLALCHEMY_DATABASE_URL.split('@')[1]}")
+    host_info = SQLALCHEMY_DATABASE_URL.split("@")[1] if "@" in SQLALCHEMY_DATABASE_URL else "remota"
+    print(f"[BD] MODO RENDER detectado. Conectando a DB: {host_info}")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
