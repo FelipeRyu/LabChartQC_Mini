@@ -37,7 +37,8 @@ from app.core.security import obtener_password_triturada
 
 db = SessionLocal()
 try:
-    if not db.query(Laboratorio).first():
+    admin_existente = db.query(Laboratorio).filter(Laboratorio.email == "admin@laboratorio.com").first()
+    if not admin_existente:
         usuario_demo = Laboratorio(
             nombre="Laboratorio San José",
             email="admin@laboratorio.com",
@@ -46,6 +47,10 @@ try:
         db.add(usuario_demo)
         db.commit()
         print("👤 Usuario demo 'admin@laboratorio.com' creado automáticamente.")
+    else:
+        admin_existente.hash_contrasena = obtener_password_triturada("admin123")
+        db.commit()
+        print("👤 Contraseña de 'admin@laboratorio.com' verificada y actualizada.")
 finally:
     db.close()
 
