@@ -13,6 +13,10 @@ let rawUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 if (rawUrl && !rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
   rawUrl = `https://${rawUrl}`;
 }
+// Si la URL es el nombre interno de red de Render (sin dominio público)
+if (rawUrl.includes('labchartqc-backend') && !rawUrl.includes('.')) {
+  rawUrl = 'https://labchartqc-backend.onrender.com';
+}
 const BASE_URL = rawUrl;
 
 /** Lee el token JWT guardado en localStorage */

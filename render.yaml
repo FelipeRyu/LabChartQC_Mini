@@ -27,11 +27,8 @@ services:
     name: labchartqc-frontend
     env: static
     rootDir: frontend
-    buildCommand: "npm install && export VITE_API_URL=https://$VITE_API_URL && npm run build"
+    buildCommand: "npm install && npm run build"
     staticPublishPath: "./dist"
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: labchartqc-backend
-          property: host
+        value: https://labchartqc-backend.onrender.com
