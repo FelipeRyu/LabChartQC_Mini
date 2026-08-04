@@ -30,6 +30,25 @@ from app.models import models
 # Esto crea las tablas automáticamente si no existen al iniciar
 models.Base.metadata.create_all(bind=engine)
 
+# Crear usuario inicial por defecto si la base de datos está vacía
+from app.core.database import SessionLocal
+from app.models.models import Laboratorio
+from app.core.security import obtener_password_triturada
+
+db = SessionLocal()
+try:
+    if not db.query(Laboratorio).first():
+        usuario_demo = Laboratorio(
+            nombre="Laboratorio San José",
+            email="admin@laboratorio.com",
+            hash_contrasena=obtener_password_triturada("admin123")
+        )
+        db.add(usuario_demo)
+        db.commit()
+        print("👤 Usuario demo 'admin@laboratorio.com' creado automáticamente.")
+finally:
+    db.close()
+
 # 1. Instancia principal de la aplicación
 app = FastAPI(title="LabChart QC API", version="1.0.0")
 
