@@ -4,6 +4,7 @@ import glob
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+# Tablas del sistema en orden estricto de dependencias (se omite alembic_version)
 ARCHIVOS_ORDENADOS = [
     "laboratorios",
     "operarios",
@@ -14,9 +15,22 @@ ARCHIVOS_ORDENADOS = [
     "niveles_control",
     "inserto_valores",
     "reglas_westgard",
-    "corridas",
-    "alembic_version"
+    "corridas"
 ]
+
+# Mapa exacto de tabla a su columna Primary Key
+TABLAS_PK = {
+    "laboratorios": "id",
+    "operarios": "id_operario",
+    "areas_laboratorio": "id",
+    "analitos": "id_analito",
+    "materiales_control": "id_material",
+    "lotes_material": "id_lote",
+    "niveles_control": "id",
+    "inserto_valores": "id_inserto",
+    "reglas_westgard": "id_regla",
+    "corridas": "id_corrida"
+}
 
 def cargar_datos_semilla_si_esta_vacio(db: Session):
     try:
@@ -49,20 +63,15 @@ def cargar_datos_semilla_si_esta_vacio(db: Session):
                     print(f"✅ Carga exitosa: {os.path.basename(archivo_sql)}")
         except Exception as err:
             db.rollback()
-            print(f"❌ Error al cargar {os.path.basename(archivo_sql)}: {err}")
+            print(f"⚠️ Nota en {os.path.basename(archivo_sql)}: {err}")
 
-    # Ajustar secuencias de los autoincrementables
-    tablas_con_id = [
-        "laboratorios", "operarios", "areas_laboratorio", "analitos",
-        "materiales_control", "lotes_material", "niveles_control",
-        "inserto_valores", "reglas_westgard", "corridas"
-    ]
-    for tabla in tablas_con_id:
+    # Ajustar las secuencias autoincrementales respetando el nombre exacto de la PK de cada tabla
+    for tabla, pk_col in TABLAS_PK.items():
         try:
-            sql_seq = f"SELECT setval(pg_get_serial_sequence('{tabla}', 'id'), COALESCE((SELECT MAX(id) FROM {tabla}), 1));"
+            sql_seq = f"SELECT setval(pg_get_serial_sequence('{tabla}', '{pk_col}'), COALESCE((SELECT MAX({pk_col}) FROM {tabla}), 1));"
             db.execute(text(sql_seq))
             db.commit()
-        except Exception as seq_err:
+        except Exception:
             db.rollback()
 
-    print("🎉 ¡Carga de datos semilla finalizada con éxito!")
+    print("🎉 ¡Carga de datos semilla finalizada!")
