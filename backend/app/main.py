@@ -30,27 +30,13 @@ from app.models import models
 # Esto crea las tablas automáticamente si no existen al iniciar
 models.Base.metadata.create_all(bind=engine)
 
-# Crear usuario inicial por defecto si la base de datos está vacía
+# Cargar automáticamente los datos semilla (analitos, áreas, insertos, etc.)
 from app.core.database import SessionLocal
-from app.models.models import Laboratorio
-from app.core.security import obtener_password_triturada
+from app.core.cargar_semilla import cargar_datos_semilla_si_esta_vacio
 
 db = SessionLocal()
 try:
-    admin_existente = db.query(Laboratorio).filter(Laboratorio.email == "admin@laboratorio.com").first()
-    if not admin_existente:
-        usuario_demo = Laboratorio(
-            nombre="Laboratorio San José",
-            email="admin@laboratorio.com",
-            hash_contrasena=obtener_password_triturada("admin123")
-        )
-        db.add(usuario_demo)
-        db.commit()
-        print("👤 Usuario demo 'admin@laboratorio.com' creado automáticamente.")
-    else:
-        admin_existente.hash_contrasena = obtener_password_triturada("admin123")
-        db.commit()
-        print("👤 Contraseña de 'admin@laboratorio.com' verificada y actualizada.")
+    cargar_datos_semilla_si_esta_vacio(db)
 finally:
     db.close()
 
